@@ -5,7 +5,15 @@ import models
 
 load_dotenv()
 
-DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+# Extraer variables
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
+host = os.getenv("DB_HOST")
+db_name = os.getenv("DB_NAME")
+port = os.getenv("DB_PORT", "5432")
+
+# Reconstruir la URL con los parámetros de Neon
+DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require"
 
 engine = create_engine(DATABASE_URL, echo=True)
 
