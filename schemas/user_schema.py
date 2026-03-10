@@ -28,3 +28,8 @@ class UserPublic(UserBase):
     class Config:
         # Esto permite que Pydantic lea datos de objetos de SQLModel/SQLAlchemy
         from_attributes = True
+
+class UserLogIn(UserBase):
+    email: str
+    password: str
+    

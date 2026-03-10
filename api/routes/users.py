@@ -4,10 +4,10 @@ from typing import List
 
 # Importamos el Modelo (DB) y los Schemas (Validación)
 from models.user import Usuario
-from schemas.user_schema import UserCreate, UserPublic, UserUpdate
+from schemas.user_schema import UserCreate, UserPublic, UserUpdate, UserLogIn
 from core.database import get_session
 # Imaginemos que tienes esta función para encriptar
-from core.security import get_password_hash 
+from core.security import get_password_hash, verify_password
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -59,3 +59,18 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     db.commit()
     db.refresh(db_user)
     return db_user
+
+@router.post("/login")
+def login(UserCredentials: UserLogIn, db: Session = Depends(get_session)):
+    user = db.exec(select(Usuario).where(Usuario.email == UserCredentials.email)).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if not verify_password(UserCredentials.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Contraseña invalida")
+
+    return {"mensaje": "Login Exitoso", "user_id": user.id}
+    
+
+
