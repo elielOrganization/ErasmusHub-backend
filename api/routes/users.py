@@ -9,10 +9,10 @@ from core.database import get_session
 # Imaginemos que tienes esta función para encriptar
 from core.security import get_password_hash 
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(tags=["Users"])
 
 # --- CREAR USUARIO ---
-@router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post("/users/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     # 1. Verificar si ya existe el email
     existing_user = db.exec(select(Usuario).where(Usuario.email == user_in.email)).first()
@@ -33,7 +33,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     return db_user # FastAPI lo filtra usando UserPublic automáticamente
 
 # --- LEER USUARIOS ---
-@router.get("/", response_model=List[UserPublic])
+@router.get("/users/", response_model=List[UserPublic])
 def read_users(db: Session = Depends(get_session)):
     users = db.exec(select(Usuario)).all()
     return users
