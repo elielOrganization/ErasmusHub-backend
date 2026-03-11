@@ -1,0 +1,9 @@
+# DESARROLLO — Caddy genera certificados de confianza local automáticamente.
+# Para PRODUCCIÓN, solo cambia "localhost" por tu dominio real (ej: api.erasmushub.com)
+# y elimina la línea "tls internal". Caddy obtiene Let's Encrypt solo.
+
+localhost {
+    tls internal
+
+    reverse_proxy host.docker.internal:8000
+}
