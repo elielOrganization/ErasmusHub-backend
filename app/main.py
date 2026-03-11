@@ -1,14 +1,32 @@
 import os
+import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from core.database import create_db_and_tables
-from api.routes.users import router as users_router
-from api.routes.auth import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+
+print("[STARTUP] Importing modules...")
+
+try:
+    from core.database import create_db_and_tables
+    from api.routes.users import router as users_router
+    from api.routes.auth import router as auth_router
+    print("[STARTUP] Imports OK")
+except Exception as e:
+    print(f"[STARTUP] Import error: {e}")
+    traceback.print_exc()
+    raise
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db_and_tables()
+    try:
+        print("[STARTUP] Connecting to database...")
+        create_db_and_tables()
+        print("[STARTUP] Database OK")
+    except Exception as e:
+        print(f"[STARTUP] Database error: {e}")
+        traceback.print_exc()
+        # No re-raise: let the app start even if DB init fails
+        # Tables already exist in Neon, this is just a safety check
     yield
 
 app = FastAPI(lifespan=lifespan)
