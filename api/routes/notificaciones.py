@@ -1,26 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, func
 from typing import Optional
+from pydantic import BaseModel
 
 from core.database import get_session
 from core.security import get_current_user
 from models.user import Usuario
 from models.notifications import Notificaciones
+from schemas.notification_schema import NotificationRead
 from schemas.pagination import PaginatedResponse
-from pydantic import BaseModel
-from datetime import datetime
-
-
-class NotificacionRead(BaseModel):
-    id: int
-    titulo: str
-    body: str
-    tipo: str
-    is_read: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class UnreadCount(BaseModel):
@@ -30,7 +18,7 @@ class UnreadCount(BaseModel):
 router = APIRouter(prefix="/notificaciones", tags=["Notificaciones"])
 
 
-@router.get("/me", response_model=PaginatedResponse[NotificacionRead])
+@router.get("/me", response_model=PaginatedResponse[NotificationRead])
 def list_my_notificaciones(
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
@@ -50,7 +38,7 @@ def list_my_notificaciones(
     ).all()
 
     return PaginatedResponse(
-        items=[NotificacionRead.model_validate(n) for n in items],
+        items=[NotificationRead.model_validate(n) for n in items],
         total=total,
         page=page,
         page_size=page_size,
@@ -70,7 +58,7 @@ def unread_count(
     return UnreadCount(count=count)
 
 
-@router.patch("/{notif_id}/read", response_model=NotificacionRead)
+@router.patch("/{notif_id}/read", response_model=NotificationRead)
 def mark_as_read(
     notif_id: int,
     current_user: Usuario = Depends(get_current_user),
@@ -84,4 +72,4 @@ def mark_as_read(
     db.add(notif)
     db.commit()
     db.refresh(notif)
-    return NotificacionRead.model_validate(notif)
+    return NotificationRead.model_validate(notif)

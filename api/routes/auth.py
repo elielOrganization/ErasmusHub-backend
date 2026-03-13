@@ -26,11 +26,6 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
 
 @router.get("/me", response_model=UserPublic)
 def me(current_user: Usuario = Depends(get_current_user)):
-    return UserPublic(
-        id=current_user.id,
-        email=current_user.email,
-        nombre=current_user.nombre,
-        apellidos=current_user.apellidos,
-        created_at=current_user.created_at,
-        roles=[r.rol for r in current_user.roles],
-    )
+    user_data = UserPublic.model_validate(current_user)
+    user_data.roles = [r.rol for r in current_user.roles]
+    return user_data

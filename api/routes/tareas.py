@@ -6,26 +6,14 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import Usuario
 from models.task import Tareas
+from schemas.task_schema import TaskRead
 from schemas.pagination import PaginatedResponse
-from pydantic import BaseModel
-from datetime import datetime
-
-
-class TareaRead(BaseModel):
-    id: int
-    titulo: str
-    completed: bool
-    due_date: datetime
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
 
-@router.get("/me", response_model=PaginatedResponse[TareaRead])
+@router.get("/me", response_model=PaginatedResponse[TaskRead])
 def list_my_tareas(
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
@@ -45,14 +33,14 @@ def list_my_tareas(
     ).all()
 
     return PaginatedResponse(
-        items=[TareaRead.model_validate(t) for t in items],
+        items=[TaskRead.model_validate(t) for t in items],
         total=total,
         page=page,
         page_size=page_size,
     )
 
 
-@router.patch("/{tarea_id}/completar", response_model=TareaRead)
+@router.patch("/{tarea_id}/completar", response_model=TaskRead)
 def completar_tarea(
     tarea_id: int,
     current_user: Usuario = Depends(get_current_user),
@@ -66,4 +54,4 @@ def completar_tarea(
     db.add(tarea)
     db.commit()
     db.refresh(tarea)
-    return TareaRead.model_validate(tarea)
+    return TaskRead.model_validate(tarea)
