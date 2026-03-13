@@ -1,33 +1,33 @@
-from .document import Documentos
-from .notifications import Notificaciones
-from .opportunity import Oportunidades
-from .request import Solicitudes
-from .rol import Roles
-from .task import Tareas
-from .user import Usuario
-from .user_rol import UserRol
-from .practica import Practicas
-from .horario_semanal import HorarioSemanal
-from .seguimiento import Seguimientos
-from .diario_practica import DiarioPractica
-from .asistencia import Asistencia
-from .comunicacion import Comunicaciones
-from .exencion import Exenciones
+from .user import User
+from .role import Role
+from .user_role import UserRole
+from .opportunity import Opportunity
+from .application import Application
+from .document import Document
+from .task import Task
+from .notification import Notification
+from .internship import Internship
+from .weekly_schedule import WeeklySchedule
+from .follow_up import FollowUp
+from .daily_log import DailyLog
+from .attendance import Attendance
+from .communication import Communication
+from .exemption import Exemption
 
 __all__ = [
-    "Documentos",
-    "Notificaciones",
-    "Oportunidades",
-    "Solicitudes",
-    "Roles",
-    "Tareas",
-    "Usuario",
-    "UserRol",
-    "Practicas",
-    "HorarioSemanal",
-    "Seguimientos",
-    "DiarioPractica",
-    "Asistencia",
-    "Comunicaciones",
-    "Exenciones",
+    "User",
+    "Role",
+    "UserRole",
+    "Opportunity",
+    "Application",
+    "Document",
+    "Task",
+    "Notification",
+    "Internship",
+    "WeeklySchedule",
+    "FollowUp",
+    "DailyLog",
+    "Attendance",
+    "Communication",
+    "Exemption",
 ]

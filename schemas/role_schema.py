@@ -4,9 +4,9 @@ from typing import Optional
 
 class RoleRead(BaseModel):
     id: int
-    nombre: str
+    name: str
     slug: str
-    descripcion: Optional[str] = None
+    description: Optional[str] = None
 
     class Config:
         from_attributes = True

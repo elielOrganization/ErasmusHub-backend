@@ -3,16 +3,20 @@ from typing import Optional, TYPE_CHECKING
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
-    from .request import Solicitudes
+    from .application import Application
 
-class Tareas(SQLModel, table=True):
+
+class Task(SQLModel, table=True):
+    __tablename__ = "task"
+
     id: Optional[int] = Field(default=None, primary_key=True)
-    app_id: int = Field(foreign_key="solicitudes.id")
-    user_id: int = Field(foreign_key="usuario.id")
-    titulo: str
+    user_id: int = Field(foreign_key="user.id")
+    application_id: Optional[int] = Field(default=None, foreign_key="application.id")
+    title: str
+    description: Optional[str] = None
     completed: bool = Field(default=False)
-    due_date: datetime
+    due_date: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    # Relación
-    solicitud: Optional["Solicitudes"] = Relationship(back_populates="tareas")
+    # Relationship
+    application: Optional["Application"] = Relationship(back_populates="tasks")

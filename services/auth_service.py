@@ -1,10 +1,10 @@
 from sqlmodel import Session, select
-from models.user import Usuario
+from models.user import User
 from core.security import verify_password
 
 
-def authenticate_user(db: Session, email: str, password: str) -> Usuario | None:
-    user = db.exec(select(Usuario).where(Usuario.email == email)).first()
+def authenticate_user(db: Session, email: str, password: str) -> User | None:
+    user = db.exec(select(User).where(User.email == email)).first()
     if not user or not verify_password(password, user.password_hash):
         return None
     return user

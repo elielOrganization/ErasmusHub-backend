@@ -11,9 +11,11 @@ try:
     from api.routes.users import router as users_router
     from api.routes.auth import router as auth_router
     from api.routes.practicas import router as practicas_router
-    from api.routes.exenciones import router as exenciones_router
-    from api.routes.tareas import router as tareas_router
-    from api.routes.notificaciones import router as notificaciones_router
+    from api.routes.exenciones import router as exemptions_router
+    from api.routes.tareas import router as tasks_router
+    from api.routes.notificaciones import router as notifications_router
+    from api.routes.opportunities import router as opportunities_router
+    from api.routes.applications import router as applications_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -29,14 +31,10 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[STARTUP] Database error: {e}")
         traceback.print_exc()
-        # No re-raise: let the app start even if DB init fails
-        # Tables already exist in Neon, this is just a safety check
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-# CORS: lee origenes permitidos de la env var CORS_ORIGINS (separados por coma)
-# Default: http://localhost:3000 para desarrollo local
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
 app.add_middleware(
@@ -47,10 +45,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Solo incluimos el router. Él ya sabe qué hacer.
 app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(practicas_router)
-app.include_router(exenciones_router)
-app.include_router(tareas_router)
-app.include_router(notificaciones_router)
+app.include_router(exemptions_router)
+app.include_router(tasks_router)
+app.include_router(notifications_router)
+app.include_router(opportunities_router)
+app.include_router(applications_router)

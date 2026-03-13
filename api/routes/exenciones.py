@@ -3,37 +3,37 @@ from sqlmodel import Session, select
 
 from core.database import get_session
 from core.security import get_current_user
-from models.user import Usuario
-from models.exencion import Exenciones
-from schemas.exencion_schema import ExencionRead, ExencionCreate
+from models.user import User
+from models.exemption import Exemption
+from schemas.exencion_schema import ExemptionRead, ExemptionCreate
 
-router = APIRouter(prefix="/exenciones", tags=["Exenciones"])
+router = APIRouter(prefix="/exemptions", tags=["Exemptions"])
 
 
-@router.get("/me", response_model=list[ExencionRead])
-def list_my_exenciones(
-    current_user: Usuario = Depends(get_current_user),
+@router.get("/me", response_model=list[ExemptionRead])
+def list_my_exemptions(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
     items = db.exec(
-        select(Exenciones)
-        .where(Exenciones.estudiante_id == current_user.id)
-        .order_by(Exenciones.created_at.desc())
+        select(Exemption)
+        .where(Exemption.student_id == current_user.id)
+        .order_by(Exemption.created_at.desc())
     ).all()
-    return [ExencionRead.model_validate(e) for e in items]
+    return [ExemptionRead.model_validate(e) for e in items]
 
 
-@router.post("/", response_model=ExencionRead)
-def create_exencion(
-    data: ExencionCreate,
-    current_user: Usuario = Depends(get_current_user),
+@router.post("/", response_model=ExemptionRead)
+def create_exemption(
+    data: ExemptionCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    exencion = Exenciones(
-        estudiante_id=current_user.id,
-        motivo=data.motivo,
+    exemption = Exemption(
+        student_id=current_user.id,
+        reason=data.reason,
     )
-    db.add(exencion)
+    db.add(exemption)
     db.commit()
-    db.refresh(exencion)
-    return ExencionRead.model_validate(exencion)
+    db.refresh(exemption)
+    return ExemptionRead.model_validate(exemption)

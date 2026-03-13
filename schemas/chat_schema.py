@@ -3,62 +3,49 @@ from typing import Optional, List
 from datetime import datetime
 
 
-# ============================================================
-# CHAT
-# ============================================================
-
 class ChatCreate(BaseModel):
-    nombre: Optional[str] = None
-    tipo: str = "direct"
-    participantes: List[int]  # lista de user_ids
+    name: Optional[str] = None
+    type: str = "direct"
+    participants: List[int]
 
 
 class ChatRead(BaseModel):
     id: int
-    nombre: Optional[str] = None
-    tipo: str
+    name: Optional[str] = None
+    type: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ============================================================
-# CHAT PARTICIPANT
-# ============================================================
-
 class ChatParticipantRead(BaseModel):
     id: int
     chat_id: int
     user_id: int
-    rol: str
+    role: str
     joined_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ============================================================
-# MESSAGE
-# ============================================================
-
 class MessageCreate(BaseModel):
-    contenido: str
+    content: str
 
 
 class MessageRead(BaseModel):
     id: int
     chat_id: int
     sender_id: int
-    contenido: str
-    leido: bool
+    content: str
+    is_read: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# --- CHAT CON ÚLTIMO MENSAJE (para lista de conversaciones) ---
 class ChatWithLastMessage(ChatRead):
-    ultimo_mensaje: Optional[MessageRead] = None
-    no_leidos: int = 0
+    last_message: Optional[MessageRead] = None
+    unread_count: int = 0

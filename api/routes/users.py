@@ -2,52 +2,52 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List
 
-# Importamos el Modelo (DB) y los Schemas (Validación)
-from models.user import Usuario
+from models.user import User
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
-# Imaginemos que tienes esta función para encriptar
-from core.security import get_password_hash 
+from core.security import get_password_hash
 
 router = APIRouter(tags=["Users"])
 
-# --- CREAR USUARIO ---
+
 @router.post("/users/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
-    # 1. Verificar si ya existe el email
-    existing_user = db.exec(select(Usuario).where(Usuario.email == user_in.email)).first()
+    existing_user = db.exec(select(User).where(User.email == user_in.email)).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-    # 2. Convertir Schema -> Model (y hashear password)
-    db_user = Usuario(
+    db_user = User(
         email=user_in.email,
-        nombre=user_in.nombre,
-        apellidos=user_in.apellidos,
-        password_hash=get_password_hash(user_in.password) # Guardamos el hash, no la plana
+        first_name=user_in.first_name,
+        last_name=user_in.last_name,
+        password_hash=get_password_hash(user_in.password),
+        rodne_cislo=user_in.rodne_cislo,
+        birth_date=user_in.birth_date,
+        address=user_in.address,
+        phone=user_in.phone,
+        is_minor=user_in.is_minor,
     )
-    
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user # FastAPI lo filtra usando UserPublic automáticamente
+    return db_user
 
-# --- LEER USUARIOS ---
+
 @router.get("/users/", response_model=List[UserPublic])
 def read_users(db: Session = Depends(get_session)):
-    users = db.exec(select(Usuario)).all()
+    users = db.exec(select(User)).all()
     return users
 
-# --- ACTUALIZAR USUARIO ---
+
 @router.patch("/{user_id}", response_model=UserPublic)
 def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_session)):
-    db_user = db.get(Usuario, user_id)
+    db_user = db.get(User, user_id)
     if not db_user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # Extraer solo los datos enviados (evita sobreescribir con None)
     update_data = user_in.model_dump(exclude_unset=True)
-    
+
     if "password" in update_data:
         password = update_data.pop("password")
         db_user.password_hash = get_password_hash(password)

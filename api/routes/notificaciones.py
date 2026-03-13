@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 from core.database import get_session
 from core.security import get_current_user
-from models.user import Usuario
-from models.notifications import Notificaciones
+from models.user import User
+from models.notification import Notification
 from schemas.notification_schema import NotificationRead
 from schemas.pagination import PaginatedResponse
 
@@ -15,24 +15,24 @@ class UnreadCount(BaseModel):
     count: int
 
 
-router = APIRouter(prefix="/notificaciones", tags=["Notificaciones"])
+router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
 @router.get("/me", response_model=PaginatedResponse[NotificationRead])
-def list_my_notificaciones(
+def list_my_notifications(
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
     search: Optional[str] = None,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    query = select(Notificaciones).where(Notificaciones.user_id == current_user.id)
+    query = select(Notification).where(Notification.user_id == current_user.id)
     if search:
-        query = query.where(Notificaciones.titulo.ilike(f"%{search}%"))
+        query = query.where(Notification.title.ilike(f"%{search}%"))
 
     total = db.exec(select(func.count()).select_from(query.subquery())).one()
     items = db.exec(
-        query.order_by(Notificaciones.created_at.desc())
+        query.order_by(Notification.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()
@@ -47,13 +47,13 @@ def list_my_notificaciones(
 
 @router.get("/me/unread-count", response_model=UnreadCount)
 def unread_count(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
     count = db.exec(
         select(func.count())
-        .where(Notificaciones.user_id == current_user.id)
-        .where(Notificaciones.is_read == False)
+        .where(Notification.user_id == current_user.id)
+        .where(Notification.is_read == False)
     ).one()
     return UnreadCount(count=count)
 
@@ -61,12 +61,12 @@ def unread_count(
 @router.patch("/{notif_id}/read", response_model=NotificationRead)
 def mark_as_read(
     notif_id: int,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    notif = db.get(Notificaciones, notif_id)
+    notif = db.get(Notification, notif_id)
     if not notif or notif.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Notificación no encontrada")
+        raise HTTPException(status_code=404, detail="Notification not found")
 
     notif.is_read = True
     db.add(notif)

@@ -1,41 +1,52 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, TYPE_CHECKING
-from datetime import datetime, timezone
-from .rol import Roles
-from .user_rol import UserRol
+from datetime import date, datetime, timezone
 
 if TYPE_CHECKING:
-    from .opportunity import Oportunidades
-    from .request import Solicitudes
-    from .notifications import Notificaciones
-    from .practica import Practicas
-    from .comunicacion import Comunicaciones
-    from .exencion import Exenciones
+    from .role import Role
+    from .user_role import UserRole
+    from .opportunity import Opportunity
+    from .application import Application
+    from .notification import Notification
+    from .internship import Internship
+    from .communication import Communication
+    from .exemption import Exemption
 
-class Usuario(SQLModel, table=True):
+
+class User(SQLModel, table=True):
+    __tablename__ = "user"
+
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     email: str = Field(unique=True, index=True)
     password_hash: str
-    nombre: str
-    apellidos: str
+    first_name: str
+    last_name: str
+    rodne_cislo: Optional[str] = Field(default=None, index=True)
+    birth_date: Optional[date] = None
+    is_minor: bool = Field(default=False)
+    address: Optional[str] = None
+    phone: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    # Relaciones
-    roles: List[Roles] = Relationship(back_populates="usuarios", link_model=UserRol)
-    oportunidades_creadas: List["Oportunidades"] = Relationship(back_populates="creador")
-    solicitudes: List["Solicitudes"] = Relationship(back_populates="estudiante")
-    notificaciones: List["Notificaciones"] = Relationship(back_populates="usuario")
-    practicas: List["Practicas"] = Relationship(
-        back_populates="estudiante",
-        sa_relationship_kwargs={"foreign_keys": "[Practicas.estudiante_id]"}
+    # Relationships
+    roles: List["Role"] = Relationship(
+        back_populates="users",
+        link_model="UserRole",
     )
-    practicas_como_cotutor: List["Practicas"] = Relationship(
-        back_populates="cotutor",
-        sa_relationship_kwargs={"foreign_keys": "[Practicas.cotutor_id]"}
+    opportunities_created: List["Opportunity"] = Relationship(back_populates="creator")
+    applications: List["Application"] = Relationship(back_populates="user")
+    notifications: List["Notification"] = Relationship(back_populates="user")
+    internships: List["Internship"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={"foreign_keys": "[Internship.student_id]"},
     )
-    comunicaciones_enviadas: List["Comunicaciones"] = Relationship(back_populates="emisor")
-    exenciones: List["Exenciones"] = Relationship(
-        back_populates="estudiante",
-        sa_relationship_kwargs={"foreign_keys": "[Exenciones.estudiante_id]"}
+    internships_as_cotutor: List["Internship"] = Relationship(
+        back_populates="co_tutor",
+        sa_relationship_kwargs={"foreign_keys": "[Internship.co_tutor_id]"},
+    )
+    communications_sent: List["Communication"] = Relationship(back_populates="sender")
+    exemptions: List["Exemption"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"},
     )

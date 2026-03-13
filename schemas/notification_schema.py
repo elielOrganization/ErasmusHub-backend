@@ -3,20 +3,18 @@ from typing import Optional
 from datetime import datetime
 
 
-# --- SCHEMA PARA CREAR (Entrada, uso interno/admin) ---
 class NotificationCreate(BaseModel):
     user_id: int
-    titulo: str
+    title: str
     body: str
-    tipo: str
+    type: str
 
 
-# --- SCHEMA PARA MOSTRAR (Salida) ---
 class NotificationRead(BaseModel):
     id: int
-    titulo: str
+    title: str
     body: str
-    tipo: str
+    type: str
     is_read: bool
     created_at: datetime
 
@@ -24,6 +22,5 @@ class NotificationRead(BaseModel):
         from_attributes = True
 
 
-# --- SCHEMA PARA MARCAR COMO LEÍDA ---
 class NotificationMarkRead(BaseModel):
     is_read: bool = True

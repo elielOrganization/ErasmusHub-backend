@@ -3,53 +3,48 @@ from typing import Optional
 from datetime import date, datetime
 
 
-# --- SCHEMA BASE ---
 class OpportunityBase(BaseModel):
-    titulo: str
-    descripcion: Optional[str] = None
-    pais: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado: str = "open"
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    name: str
+    description: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+    status: str = "open"
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
-# --- SCHEMA PARA CREAR (Entrada) ---
 class OpportunityCreate(OpportunityBase):
     pass
 
 
-# --- SCHEMA PARA ACTUALIZAR (Entrada opcional) ---
 class OpportunityUpdate(BaseModel):
-    titulo: Optional[str] = None
-    descripcion: Optional[str] = None
-    pais: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+    status: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
-# --- SCHEMA PARA LISTAR ---
 class OpportunityList(BaseModel):
     id: int
-    titulo: str
-    pais: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado: str
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    name: str
+    country: Optional[str] = None
+    city: Optional[str] = None
+    status: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# --- SCHEMA DETALLE ---
 class OpportunityDetail(OpportunityList):
-    descripcion: Optional[str] = None
-    created_by: int
-    update_at: datetime
+    description: Optional[str] = None
+    creator_id: Optional[int] = None
+    updated_at: datetime
 
     class Config:
         from_attributes = True

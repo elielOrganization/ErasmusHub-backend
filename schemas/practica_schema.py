@@ -3,129 +3,129 @@ from typing import Optional, List
 from datetime import date, datetime
 
 
-class HorarioRead(BaseModel):
+class ScheduleRead(BaseModel):
     id: int
-    dia_semana: str
-    horario_manana: Optional[str] = None
-    horario_tarde: Optional[str] = None
+    weekday: str
+    morning_hours: Optional[str] = None
+    afternoon_hours: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class PracticaList(BaseModel):
+class InternshipList(BaseModel):
     id: int
-    empresa_nombre: str
-    empresa_direccion: Optional[str] = None
-    fecha_inicio: date
-    fecha_fin: date
-    horas_totales: int
-    estado: str
+    company_name: str
+    company_address: Optional[str] = None
+    start_date: date
+    end_date: date
+    total_hours: int
+    status: str
 
     class Config:
         from_attributes = True
 
 
-class PracticaDetail(BaseModel):
+class InternshipDetail(BaseModel):
     id: int
-    # Datos alumno
-    estudiante_nombre: str
-    estudiante_apellidos: str
-    estudiante_email: str
-    # Datos empresa
-    empresa_nombre: str
-    empresa_cif: Optional[str] = None
-    empresa_direccion: Optional[str] = None
-    tutor_empresa_nombre: Optional[str] = None
-    tutor_empresa_email: Optional[str] = None
-    # Datos practica
-    tutor_educativo_nombre: Optional[str] = None
-    fecha_inicio: date
-    fecha_fin: date
-    horas_totales: int
-    estado: str
-    # Horario
-    horarios: List[HorarioRead] = []
+    # Student data
+    student_first_name: str
+    student_last_name: str
+    student_email: str
+    # Company data
+    company_name: str
+    company_tax_id: Optional[str] = None
+    company_address: Optional[str] = None
+    company_tutor_name: Optional[str] = None
+    company_tutor_email: Optional[str] = None
+    # Internship data
+    academic_tutor_name: Optional[str] = None
+    start_date: date
+    end_date: date
+    total_hours: int
+    status: str
+    # Schedule
+    schedules: List[ScheduleRead] = []
 
 
-class SeguimientoRead(BaseModel):
+class FollowUpRead(BaseModel):
     id: int
-    tipo: str
-    fecha_programada: date
-    completado: bool
-    fecha_completado: Optional[datetime] = None
+    type: str
+    scheduled_date: date
+    completed: bool
+    completed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 
-class SeguimientoSubmit(BaseModel):
-    respuestas: str  # JSON string
+class FollowUpSubmit(BaseModel):
+    answers: str
 
 
-class DiarioRead(BaseModel):
+class DailyLogRead(BaseModel):
     id: int
-    fecha: date
-    estado: str
-    hora_inicio_manana: Optional[str] = None
-    hora_fin_manana: Optional[str] = None
-    hora_inicio_tarde: Optional[str] = None
-    hora_fin_tarde: Optional[str] = None
-    incidencias: Optional[str] = None
+    date: date
+    status: str
+    morning_start: Optional[str] = None
+    morning_end: Optional[str] = None
+    afternoon_start: Optional[str] = None
+    afternoon_end: Optional[str] = None
+    incidents: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class DiarioCreate(BaseModel):
-    fecha: date
-    hora_inicio_manana: Optional[str] = None
-    hora_fin_manana: Optional[str] = None
-    hora_inicio_tarde: Optional[str] = None
-    hora_fin_tarde: Optional[str] = None
-    actividades: Optional[str] = None
-    incidencias: Optional[str] = None
+class DailyLogCreate(BaseModel):
+    date: date
+    morning_start: Optional[str] = None
+    morning_end: Optional[str] = None
+    afternoon_start: Optional[str] = None
+    afternoon_end: Optional[str] = None
+    activities: Optional[str] = None
+    incidents: Optional[str] = None
 
 
-class DiarioUpdate(BaseModel):
-    estado: Optional[str] = None
-    hora_inicio_manana: Optional[str] = None
-    hora_fin_manana: Optional[str] = None
-    hora_inicio_tarde: Optional[str] = None
-    hora_fin_tarde: Optional[str] = None
-    actividades: Optional[str] = None
-    incidencias: Optional[str] = None
+class DailyLogUpdate(BaseModel):
+    status: Optional[str] = None
+    morning_start: Optional[str] = None
+    morning_end: Optional[str] = None
+    afternoon_start: Optional[str] = None
+    afternoon_end: Optional[str] = None
+    activities: Optional[str] = None
+    incidents: Optional[str] = None
 
 
-class AsistenciaRead(BaseModel):
+class AttendanceRead(BaseModel):
     id: int
-    fecha: date
-    tipo: str
-    hora_inicio: Optional[str] = None
-    hora_fin: Optional[str] = None
-    estado: str
-    notas: Optional[str] = None
+    date: date
+    type: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    status: str
+    notes: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class ComunicacionRead(BaseModel):
+class CommunicationRead(BaseModel):
     id: int
-    emisor_id: int
-    destinatario_tipo: str
-    tipo: str
-    asunto: str
-    mensaje: str
-    leido: bool
+    sender_id: int
+    recipient_type: str
+    type: str
+    subject: str
+    body: str
+    is_read: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-class ComunicacionCreate(BaseModel):
-    destinatario_tipo: str  # tutor_empresa, cotutor
-    tipo: str  # mensaje, consulta, incidencia
-    asunto: str
-    mensaje: str
+class CommunicationCreate(BaseModel):
+    recipient_type: str  # company_tutor, co_tutor
+    type: str  # message, query, incident
+    subject: str
+    body: str
