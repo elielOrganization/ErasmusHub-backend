@@ -10,6 +10,10 @@ try:
     from core.database import create_db_and_tables
     from api.routes.users import router as users_router
     from api.routes.auth import router as auth_router
+    from api.routes.practicas import router as practicas_router
+    from api.routes.exenciones import router as exenciones_router
+    from api.routes.tareas import router as tareas_router
+    from api.routes.notificaciones import router as notificaciones_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -46,3 +50,7 @@ app.add_middleware(
 # Solo incluimos el router. Él ya sabe qué hacer.
 app.include_router(users_router)
 app.include_router(auth_router)
+app.include_router(practicas_router)
+app.include_router(exenciones_router)
+app.include_router(tareas_router)
+app.include_router(notificaciones_router)

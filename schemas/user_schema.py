@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 # --- SCHEMA BASE (Campos comunes) ---
 class UserBase(BaseModel):
@@ -23,8 +23,7 @@ class UserUpdate(BaseModel):
 class UserPublic(UserBase):
     id: int
     created_at: datetime
-    # updated_at: datetime # Opcional, si quieres mostrarlo
+    roles: List[str] = []
 
     class Config:
-        # Esto permite que Pydantic lea datos de objetos de SQLModel/SQLAlchemy
         from_attributes = True

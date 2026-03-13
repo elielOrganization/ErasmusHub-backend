@@ -8,6 +8,9 @@ if TYPE_CHECKING:
     from .opportunity import Oportunidades
     from .request import Solicitudes
     from .notifications import Notificaciones
+    from .practica import Practicas
+    from .comunicacion import Comunicaciones
+    from .exencion import Exenciones
 
 class Usuario(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
@@ -23,3 +26,16 @@ class Usuario(SQLModel, table=True):
     oportunidades_creadas: List["Oportunidades"] = Relationship(back_populates="creador")
     solicitudes: List["Solicitudes"] = Relationship(back_populates="estudiante")
     notificaciones: List["Notificaciones"] = Relationship(back_populates="usuario")
+    practicas: List["Practicas"] = Relationship(
+        back_populates="estudiante",
+        sa_relationship_kwargs={"foreign_keys": "[Practicas.estudiante_id]"}
+    )
+    practicas_como_cotutor: List["Practicas"] = Relationship(
+        back_populates="cotutor",
+        sa_relationship_kwargs={"foreign_keys": "[Practicas.cotutor_id]"}
+    )
+    comunicaciones_enviadas: List["Comunicaciones"] = Relationship(back_populates="emisor")
+    exenciones: List["Exenciones"] = Relationship(
+        back_populates="estudiante",
+        sa_relationship_kwargs={"foreign_keys": "[Exenciones.estudiante_id]"}
+    )
