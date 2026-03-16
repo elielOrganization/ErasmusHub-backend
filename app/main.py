@@ -37,14 +37,14 @@ app = FastAPI(lifespan=lifespan)
 
 cors_origins = os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://localhost:3000,https://localhost,http://localhost,"
+    "http://localhost:3000,http://127.0.0.1:3000,https://localhost:3000,https://localhost,http://localhost"
 ).split(",")
-cors_origins = [o.strip() for o in cors_origins]
+cors_origins = [o.strip() for o in cors_origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
