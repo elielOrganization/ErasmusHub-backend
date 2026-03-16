@@ -60,6 +60,6 @@ class User(SQLModel, table=True):
     
     # Matches the exemption table references
     exemptions: List["Exemption"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={"foreign_keys": "[Exemption.user_id]"},
+        back_populates="student", # Cambiado de "user" a "student"
+        sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"}, # Cambiado a "student_id"
     )

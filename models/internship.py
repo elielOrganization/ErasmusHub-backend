@@ -30,6 +30,14 @@ class Internship(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    tutor_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    co_tutor_id: Optional[int] = Field(default=None, foreign_key="user.id")
+
+    tutor: Optional["User"] = Relationship(
+        back_populates="internships_as_tutor",
+        sa_relationship_kwargs={"foreign_keys": "[Internship.tutor_id]"},
+    )
+
     # Relationships
     student: Optional["User"] = Relationship(
         back_populates="internships",
