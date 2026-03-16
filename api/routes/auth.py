@@ -13,7 +13,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=Token)
 def login(credentials: LoginRequest, db: Session = Depends(get_session)):
-    user = authenticate_user(db, credentials.rodne_cislo, credentials.password)
+    user = authenticate_user(db, credentials.username, credentials.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
