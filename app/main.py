@@ -35,18 +35,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-<<<<<<< Updated upstream
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-=======
-# CORS — Con Caddy como reverse proxy, frontend y API comparten origen
-# (mismo dominio/puerto), así que CORS no se activa para peticiones normales.
-# Estos orígenes cubren acceso directo al backend sin Caddy (ej: desarrollo).
-_origins = os.getenv(
+cors_origins = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,https://localhost:3000,https://localhost,http://localhost"
-)
-origins = [o.strip() for o in _origins.split(",")]
->>>>>>> Stashed changes
+).split(",")
+cors_origins = [o.strip() for o in cors_origins]
 
 app.add_middleware(
     CORSMiddleware,
