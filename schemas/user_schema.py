@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr, Field
 from datetime import date, datetime
 from typing import Optional, List
 
+from schemas.role_schema import RoleRead
+
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -10,6 +12,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
+
     password: str = Field(..., min_length=8)
     rodne_cislo: Optional[str] = None
     birth_date: Optional[date] = None
@@ -38,7 +41,7 @@ class UserPublic(UserBase):
     address: Optional[str] = None
     phone: Optional[str] = None
     created_at: datetime
-    roles: List[str] = []
+    roles: List[RoleRead] = []
 
     class Config:
         from_attributes = True

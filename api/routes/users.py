@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from typing import List
 
 from models.user import User
+from models.user_role import UserRole
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
 from core.security import get_password_hash
@@ -20,6 +21,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
         existing_dni = db.exec(select(User).where(User.rodne_cislo == user_in.rodne_cislo)).first()
         if existing_dni:
             raise HTTPException(status_code=400, detail="DNI already registered")
+        
 
     db_user = User(
         email=user_in.email,
@@ -34,6 +36,20 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     )
 
     db.add(db_user)
+    db.flush()
+
+    if user_in.is_minor:
+        db_user_rol = UserRole(
+            user_id=db_user.id,
+            role_id=4
+        )
+    else:
+        db_user_rol = UserRole(
+            user_id=db_user.id,
+            role_id=6
+        )
+
+    db.add(db_user_rol)
     db.commit()
     db.refresh(db_user)
     return db_user
