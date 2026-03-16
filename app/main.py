@@ -37,7 +37,7 @@ app = FastAPI(lifespan=lifespan)
 
 cors_origins = os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://localhost:3000,https://localhost,http://localhost"
+    "http://localhost:3000,http://127.0.0.1:3000,https://localhost:3000,https://localhost,http://localhost,https://erasmus-hub-frontend.vercel.app/"
 ).split(",")
 cors_origins = [o.strip() for o in cors_origins]
 
