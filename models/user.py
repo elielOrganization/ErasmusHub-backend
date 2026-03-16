@@ -20,7 +20,11 @@ class User(SQLModel, table=True):
 
     # Fields matching your SQL schema
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
+<<<<<<< Updated upstream
     rodne_cislo: Optional[str] = Field(default=None, unique=True, index=True)
+=======
+    rodne_cislo: str = Field(unique=True, index=True)
+>>>>>>> Stashed changes
     email: str = Field(unique=True, index=True)
     password_hash: str
     first_name: str

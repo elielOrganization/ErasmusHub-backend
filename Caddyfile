@@ -1,0 +1,44 @@
+# ============================================================
+# ErasmusHub — Reverse Proxy con HTTPS (Caddy)
+# ============================================================
+#
+# Caddy sirve AMBOS servicios (frontend + API) bajo un SOLO
+# origen HTTPS, lo que:
+#   1. Habilita PWA/Service Workers en todos los navegadores y móviles
+#   2. Elimina problemas de CORS (mismo origen)
+#   3. Simplifica la configuración
+#
+# DESARROLLO (actual):
+#   - Accede a https://localhost → frontend Next.js
+#   - Las peticiones a https://localhost/api/* → backend FastAPI
+#   - "tls internal" genera certificados autofirmados automáticamente
+#
+# ACCESO DESDE MÓVILES (misma red WiFi):
+#   Añade la IP de tu equipo al bloque de sitios:
+#     localhost, 192.168.x.x { ... }
+#   Luego en el móvil abre https://192.168.x.x y acepta el
+#   certificado, o instala la CA de Caddy:
+#     docker cp erasmushub_caddy:/data/caddy/pki/authorities/local/root.crt .
+#
+# PRODUCCIÓN:
+#   Cambia "localhost" por tu dominio real y elimina "tls internal".
+#   Caddy obtendrá certificados Let's Encrypt automáticamente.
+#     erasmushub.com {
+#         handle_path /api/* { reverse_proxy backend:8000 }
+#         handle { reverse_proxy frontend:3000 }
+#     }
+# ============================================================
+
+localhost {
+    tls internal
+
+    # Peticiones a /api/* → FastAPI (se elimina el prefijo /api)
+    handle_path /api/* {
+        reverse_proxy host.docker.internal:8000
+    }
+
+    # Todo lo demás → Next.js frontend
+    handle {
+        reverse_proxy host.docker.internal:3000
+    }
+}

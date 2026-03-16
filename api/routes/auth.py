@@ -13,11 +13,15 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=Token)
 def login(credentials: LoginRequest, db: Session = Depends(get_session)):
-    user = authenticate_user(db, credentials.email, credentials.password)
+    user = authenticate_user(db, credentials.rodne_cislo, credentials.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+<<<<<<< Updated upstream
             detail="Incorrect email or password",
+=======
+            detail="DNI o contraseña incorrectos",
+>>>>>>> Stashed changes
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = create_access_token(subject=user.id)
