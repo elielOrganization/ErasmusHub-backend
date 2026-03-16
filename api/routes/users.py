@@ -22,16 +22,6 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
         if existing_dni:
             raise HTTPException(status_code=400, detail="DNI already registered")
         
-    if user_in.is_minor:
-        db_user_rol = UserRole(
-            user_id=user_in.rodne_cislo,
-            role_id=4
-        )
-    else:
-        db_user_rol = UserRole(
-            user_id=user_in.rodne_cislo,
-            role_id=6
-        )
 
     db_user = User(
         email=user_in.email,
@@ -46,6 +36,19 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     )
 
     db.add(db_user)
+    db.flush()
+
+    if user_in.is_minor:
+        db_user_rol = UserRole(
+            user_id=db_user.id,
+            role_id=4
+        )
+    else:
+        db_user_rol = UserRole(
+            user_id=db_user.id,
+            role_id=6
+        )
+
     db.add(db_user_rol)
     db.commit()
     db.refresh(db_user)

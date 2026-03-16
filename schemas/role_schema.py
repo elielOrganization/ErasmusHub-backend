@@ -4,8 +4,7 @@ from typing import Optional
 
 class RoleRead(BaseModel):
     id: int
-    name: str
-    slug: str
+    name: Optional[str] = None
     description: Optional[str] = None
 
     class Config:
@@ -13,10 +12,10 @@ class RoleRead(BaseModel):
 
 
 class UserRoleAssign(BaseModel):
-    user_id: int
+    user_id: str
     role_id: int
 
 
 class UserRoleRemove(BaseModel):
-    user_id: int
+    user_id: str
     role_id: int
