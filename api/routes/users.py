@@ -12,6 +12,7 @@ router = APIRouter(tags=["Users"])
 
 @router.post("/users/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
+<<<<<<< Updated upstream
     existing_user = db.exec(select(User).where(User.email == user_in.email)).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -26,6 +27,24 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
         address=user_in.address,
         phone=user_in.phone,
         is_minor=user_in.is_minor,
+=======
+    # 1. Verificar si ya existe el email o rodne_cislo
+    existing_email = db.exec(select(Usuario).where(Usuario.email == user_in.email)).first()
+    if existing_email:
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+
+    existing_dni = db.exec(select(Usuario).where(Usuario.rodne_cislo == user_in.rodne_cislo)).first()
+    if existing_dni:
+        raise HTTPException(status_code=400, detail="El DNI ya está registrado")
+
+    # 2. Convertir Schema -> Model (y hashear password)
+    db_user = Usuario(
+        rodne_cislo=user_in.rodne_cislo,
+        email=user_in.email,
+        nombre=user_in.nombre,
+        apellidos=user_in.apellidos,
+        password_hash=get_password_hash(user_in.password)
+>>>>>>> Stashed changes
     )
 
     db.add(db_user)
