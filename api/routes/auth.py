@@ -30,5 +30,4 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
 def me(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == current_user.id)).all()
     user_data = UserPublic.model_validate(current_user.model_dump(exclude={'roles'}))
-    user_data.role = roles[0] if roles else None
     return user_data
