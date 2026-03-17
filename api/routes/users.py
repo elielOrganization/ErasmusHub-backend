@@ -57,7 +57,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     # Load roles for the response
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
     user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
-    user_data.roles = roles
+    user_data.role = roles[0] if roles else None
     return user_data
 
 
@@ -68,7 +68,7 @@ def read_users(db: Session = Depends(get_session)):
     for user in users:
         roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == user.id)).all()
         user_data = UserPublic.model_validate(user.model_dump(exclude={'roles'}))
-        user_data.roles = roles
+        user_data.role = roles[0] if roles else None
         user_publics.append(user_data)
     return user_publics
 
@@ -94,5 +94,5 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
     user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
-    user_data.roles = roles
+    user_data.role = roles[0] if roles else None
     return user_data

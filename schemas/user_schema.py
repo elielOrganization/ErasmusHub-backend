@@ -40,7 +40,7 @@ class UserPublic(UserBase):
     address: Optional[str] = None
     phone: Optional[str] = None
     created_at: datetime
-    roles: List[Role] = []
+    role: Optional[Role] = None
 
     class Config:
         from_attributes = True

@@ -12,6 +12,8 @@ ENV/
 # Esto ignora los archivos .pyc específicos que se ven en tu imagen
 *.pyc
 
+# --- CLAUDE AI WORKSPACES ---
+.claude/
 
 # --- ARCHIVOS DE COMPILACIÓN Y DISTRIBUCIÓN ---
 *.py[cod]
