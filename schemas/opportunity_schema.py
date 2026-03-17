@@ -13,6 +13,10 @@ class OpportunityBase(BaseModel):
     end_date: Optional[date] = None
 
 
+class OpportunityCreateTest(OpportunityBase):
+    creator_id: int
+
+
 class OpportunityCreate(OpportunityBase):
     pass
 

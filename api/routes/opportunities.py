@@ -6,7 +6,7 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import User
 from models.opportunity import Opportunity
-from schemas.opportunity_schema import OpportunityCreate, OpportunityList, OpportunityDetail, OpportunityUpdate
+from schemas.opportunity_schema import OpportunityCreate, OpportunityList, OpportunityDetail, OpportunityUpdate, OpportunityCreateTest
 from schemas.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
@@ -48,6 +48,19 @@ def get_opportunity(opp_id: int, db: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Opportunity not found")
     return OpportunityDetail.model_validate(opp)
 
+
+@router.post("/test", response_model=OpportunityDetail)
+def create_opportunityTest(
+    data: OpportunityCreateTest,
+    db: Session = Depends(get_session),
+):
+    # **data.model_dump() ahora incluye el creator_id que mandes en el JSON
+    opp = Opportunity(**data.model_dump()) 
+    
+    db.add(opp)
+    db.commit()
+    db.refresh(opp)
+    return OpportunityDetail.model_validate(opp)
 
 @router.post("/", response_model=OpportunityDetail)
 def create_opportunity(

@@ -5,6 +5,7 @@ from core.security import verify_password
 
 def authenticate_user(db: Session, rodne_cislo: str, password: str) -> User | None:
     user = db.exec(select(User).where(User.rodne_cislo == rodne_cislo)).first()
+    print(user, password)
     if not user or not verify_password(password, user.password_hash):
         return None
     return user
