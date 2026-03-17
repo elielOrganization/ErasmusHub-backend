@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from typing import List
 
 from models.user import User
+from models.role import Role
 from models.user_role import UserRole
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
@@ -52,13 +53,24 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     db.add(db_user_rol)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    
+    # Load roles for the response
+    roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
+    user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
+    user_data.roles = roles
+    return user_data
 
 
 @router.get("/users/", response_model=List[UserPublic])
 def read_users(db: Session = Depends(get_session)):
     users = db.exec(select(User)).all()
-    return users
+    user_publics = []
+    for user in users:
+        roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == user.id)).all()
+        user_data = UserPublic.model_validate(user.model_dump(exclude={'roles'}))
+        user_data.roles = roles
+        user_publics.append(user_data)
+    return user_publics
 
 
 @router.patch("/{user_id}", response_model=UserPublic)
@@ -79,4 +91,8 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    
+    roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
+    user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
+    user_data.roles = roles
+    return user_data

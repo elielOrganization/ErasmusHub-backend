@@ -1,8 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import date, datetime
 from typing import Optional, List
-
-from schemas.role_schema import RoleRead
+from models.role import Role
 
 
 class UserBase(BaseModel):
@@ -41,7 +40,7 @@ class UserPublic(UserBase):
     address: Optional[str] = None
     phone: Optional[str] = None
     created_at: datetime
-    roles: List[RoleRead] = []
+    roles: List[Role] = []
 
     class Config:
         from_attributes = True
