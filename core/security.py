@@ -30,7 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     )
 
 
-def create_access_token(subject: Union[str, Any]) -> str:
+def create_access_token(subject: Union[str, Any], role: str | None = None) -> str:
     now_utc = datetime.now(timezone.utc)
     expire = now_utc + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {
@@ -38,6 +38,13 @@ def create_access_token(subject: Union[str, Any]) -> str:
         "sub": str(subject),
         "iat": now_utc,
     }
+
+    # Incluimos el rol en el token para que el frontend pueda usarlo sin necesidad de
+    # llamar a /auth/me en cada render. El backend seguirá validando el token contra
+    # la base de datos en rutas críticas.
+    if role is not None:
+        to_encode["role"] = role
+
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 

@@ -22,7 +22,16 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
             detail="DNI o contraseña incorrectos",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_access_token(subject=user.id)
+
+    # Cargamos el rol para inyectarlo en el token y evitar llamadas innecesarias a /auth/me.
+    roles = db.exec(
+        select(Role)
+        .join(UserRole, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user.id)
+    ).all()
+    role_name = roles[0].name if roles else None
+
+    token = create_access_token(subject=user.id, role=role_name)
     return Token(access_token=token)
 
 
