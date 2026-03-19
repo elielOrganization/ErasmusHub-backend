@@ -5,6 +5,7 @@ from datetime import datetime
 
 class ApplicationCreate(BaseModel):
     opportunity_id: int
+    user_id: Optional[int] = None
 
 
 class ApplicationUpdate(BaseModel):

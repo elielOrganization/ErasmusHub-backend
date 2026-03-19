@@ -8,6 +8,7 @@ class OpportunityBase(BaseModel):
     description: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
+    max_slots: int = 1
     status: str = "open"
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -22,6 +23,7 @@ class OpportunityUpdate(BaseModel):
     description: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
+    max_slots: Optional[int] = None
     status: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -32,6 +34,8 @@ class OpportunityList(BaseModel):
     name: str
     country: Optional[str] = None
     city: Optional[str] = None
+    max_slots: int
+    filled_slots: int
     status: str
     start_date: Optional[date] = None
     end_date: Optional[date] = None
