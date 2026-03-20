@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from sqlalchemy import or_
 from typing import List
 
@@ -165,6 +165,19 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     if "password" in update_data:
         password = update_data.pop("password")
         db_user.password_hash = get_password_hash(password)
+
+    if "role_id" in update_data:
+        new_role_id = update_data.pop("role_id")
+
+        role_exists = db.get(Role, new_role_id)
+
+        if not role_exists:
+            raise HTTPException(status_code=400, detail="Role not found")
+        
+        db.exec(delete(UserRole).where(UserRole.user_id == db_user.id)) 
+        
+        new_user_role = UserRole(user_id=db_user.id, role_id=new_role_id)
+        db.add(new_user_role)
 
     for key, value in update_data.items():
         setattr(db_user, key, value)
