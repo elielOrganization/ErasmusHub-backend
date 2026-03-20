@@ -73,7 +73,22 @@ def read_users(db: Session = Depends(get_session)):
     return user_publics
 
 
-@router.patch("/{user_id}", response_model=UserPublic)
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: Session = Depends(get_session)):
+    db_user = db.get(User, user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete associated roles first to avoid FK constraint errors
+    user_roles = db.exec(select(UserRole).where(UserRole.user_id == user_id)).all()
+    for user_role in user_roles:
+        db.delete(user_role)
+
+    db.delete(db_user)
+    db.commit()
+
+
+@router.patch("/users/{user_id}", response_model=UserPublic)
 def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_session)):
     db_user = db.get(User, user_id)
     if not db_user:
