@@ -10,7 +10,7 @@ from schemas.role_schema import RoleRead
 
 router = APIRouter(tags=["Role"])
 
-@router.get("/", response_model=list[RoleRead])
+@router.get("/role/", response_model=list[RoleRead])
 def get_roles(db: Session = Depends(get_session)):
     roles = db.exec(select(Role)).all()
     if not roles:
