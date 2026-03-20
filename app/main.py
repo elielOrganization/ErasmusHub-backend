@@ -16,6 +16,7 @@ try:
     from api.routes.notificaciones import router as notifications_router
     from api.routes.opportunities import router as opportunities_router
     from api.routes.applications import router as applications_router
+    from api.routes.role import router as role_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -57,3 +58,4 @@ app.include_router(tasks_router)
 app.include_router(notifications_router)
 app.include_router(opportunities_router)
 app.include_router(applications_router)
+app.include_router(role_router)
