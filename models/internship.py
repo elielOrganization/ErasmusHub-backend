@@ -22,7 +22,6 @@ class Internship(SQLModel, table=True):
     company_tutor_name: Optional[str] = None
     company_tutor_email: Optional[str] = None
     academic_tutor_name: Optional[str] = None
-    co_tutor_id: Optional[int] = Field(default=None, foreign_key="user.id")
     start_date: date
     end_date: date
     total_hours: int

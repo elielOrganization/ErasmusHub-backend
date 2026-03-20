@@ -1,10 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+from sqlalchemy import or_
 from typing import List
 
 from models.user import User
 from models.role import Role
 from models.user_role import UserRole
+from models.notification import Notification
+from models.document import Document
+from models.task import Task
+from models.application import Application
+from models.internship import Internship
+from models.communication import Communication
+from models.exemption import Exemption
+from models.opportunity import Opportunity
+from models.weekly_schedule import WeeklySchedule
+from models.follow_up import FollowUp
+from models.daily_log import DailyLog
+from models.attendance import Attendance
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
 from core.security import get_password_hash
@@ -79,11 +92,64 @@ def delete_user(user_id: int, db: Session = Depends(get_session)):
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Delete associated roles first to avoid FK constraint errors
-    user_roles = db.exec(select(UserRole).where(UserRole.user_id == user_id)).all()
-    for user_role in user_roles:
-        db.delete(user_role)
+    # 1. Delete internships owned by this user and all their children
+    student_internships = db.exec(select(Internship).where(Internship.student_id == user_id)).all()
+    for internship in student_internships:
+        iid = internship.id
+        for record in db.exec(select(WeeklySchedule).where(WeeklySchedule.internship_id == iid)).all():
+            db.delete(record)
+        for record in db.exec(select(FollowUp).where(FollowUp.internship_id == iid)).all():
+            db.delete(record)
+        for record in db.exec(select(DailyLog).where(DailyLog.internship_id == iid)).all():
+            db.delete(record)
+        for record in db.exec(select(Attendance).where(Attendance.internship_id == iid)).all():
+            db.delete(record)
+        for record in db.exec(select(Communication).where(Communication.internship_id == iid)).all():
+            db.delete(record)
+        db.delete(internship)
 
+    # 2. Nullify tutor/co-tutor references in internships not owned by this user
+    for internship in db.exec(select(Internship).where(Internship.tutor_id == user_id)).all():
+        internship.tutor_id = None
+        db.add(internship)
+    for internship in db.exec(select(Internship).where(Internship.co_tutor_id == user_id)).all():
+        internship.co_tutor_id = None
+        db.add(internship)
+
+    # 3. Delete remaining communications sent by this user (in other internships)
+    for record in db.exec(select(Communication).where(Communication.sender_id == user_id)).all():
+        db.delete(record)
+
+    # 4. Delete documents and tasks (FK to user and optionally to application)
+    for record in db.exec(select(Document).where(Document.user_id == user_id)).all():
+        db.delete(record)
+    for record in db.exec(select(Task).where(Task.user_id == user_id)).all():
+        db.delete(record)
+
+    # 5. Delete applications
+    for record in db.exec(select(Application).where(Application.user_id == user_id)).all():
+        db.delete(record)
+
+    # 6. Delete notifications
+    for record in db.exec(select(Notification).where(Notification.user_id == user_id)).all():
+        db.delete(record)
+
+    # 7. Delete exemptions (as student or as reviewer)
+    for record in db.exec(select(Exemption).where(
+        or_(Exemption.student_id == user_id, Exemption.reviewed_by == user_id)
+    )).all():
+        db.delete(record)
+
+    # 8. Nullify opportunity creator references
+    for opp in db.exec(select(Opportunity).where(Opportunity.creator_id == user_id)).all():
+        opp.creator_id = None
+        db.add(opp)
+
+    # 9. Delete user roles
+    for record in db.exec(select(UserRole).where(UserRole.user_id == user_id)).all():
+        db.delete(record)
+
+    # 10. Delete user
     db.delete(db_user)
     db.commit()
 
