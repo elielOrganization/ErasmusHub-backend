@@ -17,11 +17,14 @@ try:
     from api.routes.opportunities import router as opportunities_router
     from api.routes.applications import router as applications_router
     from api.routes.role import router as role_router
+    from api.routes.documents import router as documents_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
     traceback.print_exc()
     raise
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "library")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,6 +35,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[STARTUP] Database error: {e}")
         traceback.print_exc()
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -59,3 +63,4 @@ app.include_router(notifications_router)
 app.include_router(opportunities_router)
 app.include_router(applications_router)
 app.include_router(role_router)
+app.include_router(documents_router)
