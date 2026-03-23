@@ -38,19 +38,18 @@ def get_application(
 @router.post("/", response_model=ApplicationDetail, status_code=status.HTTP_201_CREATED)
 def create_application(
     data: ApplicationCreate,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
     existing = db.exec(
         select(Application)
-        .where(Application.user_id == current_user.id)
+        .where(Application.user_id == data.user_id)
         .where(Application.opportunity_id == data.opportunity_id)
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="You already have an application for this opportunity")
 
     application = Application(
-        user_id=current_user.id,
+        user_id=data.user_id,
         opportunity_id=data.opportunity_id,
         status="pending",
     )
