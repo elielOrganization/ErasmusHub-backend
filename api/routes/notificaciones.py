@@ -58,6 +58,23 @@ def unread_count(
     return UnreadCount(count=count)
 
 
+@router.patch("/me/read-all")
+def mark_all_as_read(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    notifs = db.exec(
+        select(Notification)
+        .where(Notification.user_id == current_user.id)
+        .where(Notification.is_read == False)
+    ).all()
+    for notif in notifs:
+        notif.is_read = True
+        db.add(notif)
+    db.commit()
+    return {"updated": len(notifs)}
+
+
 @router.patch("/{notif_id}/read", response_model=NotificationRead)
 def mark_as_read(
     notif_id: int,
