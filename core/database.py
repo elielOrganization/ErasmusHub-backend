@@ -1,5 +1,6 @@
 import os
 from sqlmodel import create_engine, Session, SQLModel
+from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
 import models
 
@@ -17,8 +18,8 @@ DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=
 
 engine = create_engine(
     DATABASE_URL,
+    poolclass=NullPool,
     echo=os.getenv("DB_ECHO", "false").lower() == "true",
-    pool_pre_ping=True,
     connect_args={"connect_timeout": 10},
 )
 
