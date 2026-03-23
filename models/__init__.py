@@ -4,6 +4,7 @@ from .user_role import UserRole
 from .opportunity import Opportunity
 from .application import Application
 from .document import Document
+from .application_document import ApplicationDocument
 from .task import Task
 from .notification import Notification
 from .internship import Internship
@@ -21,6 +22,7 @@ __all__ = [
     "Opportunity",
     "Application",
     "Document",
+    "ApplicationDocument",
     "Task",
     "Notification",
     "Internship",

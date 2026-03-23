@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 if TYPE_CHECKING:
     from .user import User
     from .opportunity import Opportunity
-    from .document import Document
     from .task import Task
 
 
@@ -26,5 +25,4 @@ class Application(SQLModel, table=True):
     # Relationships
     user: Optional["User"] = Relationship(back_populates="applications")
     opportunity: Optional["Opportunity"] = Relationship(back_populates="applications")
-    documents: List["Document"] = Relationship(back_populates="application")
     tasks: List["Task"] = Relationship(back_populates="application")
