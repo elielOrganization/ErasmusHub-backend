@@ -5,15 +5,15 @@ from datetime import datetime
 
 class NotificationCreate(BaseModel):
     user_id: int
-    title: str
-    body: str
+    message_key: str   # e.g. "app_accepted", "task_due_soon"
+    params: Optional[str] = None  # JSON string with template variables
     type: str
 
 
 class NotificationRead(BaseModel):
     id: int
-    title: str
-    body: str
+    message_key: str
+    params: Optional[str] = None
     type: str
     is_read: bool
     created_at: datetime
