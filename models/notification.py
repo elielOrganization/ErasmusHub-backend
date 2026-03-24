@@ -11,8 +11,8 @@ class Notification(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
-    title: str
-    body: str
+    message_key: str
+    params: Optional[str] = Field(default=None)  # JSON string, e.g. '{"university": "Praga"}'
     type: str
     is_read: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
