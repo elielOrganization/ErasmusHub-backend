@@ -6,7 +6,9 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import User
 from models.opportunity import Opportunity
+from models.application import Application
 from schemas.opportunity_schema import OpportunityCreate, OpportunityList, OpportunityDetail, OpportunityUpdate
+from schemas.application_schema import ApplicationWithStudent
 from schemas.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
@@ -63,6 +65,35 @@ def create_opportunity(
     db.commit()
     db.refresh(opp)
     return OpportunityDetail.model_validate(opp)
+
+
+@router.get("/{opp_id}/applications", response_model=list[ApplicationWithStudent])
+def list_opportunity_applications(
+    opp_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    opp = db.get(Opportunity, opp_id)
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    rows = db.exec(
+        select(Application, User)
+        .join(User, Application.user_id == User.id)
+        .where(Application.opportunity_id == opp_id)
+    ).all()
+
+    return [
+        ApplicationWithStudent(
+            application_id=app.id,
+            user_id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            status=app.status,
+        )
+        for app, user in rows
+    ]
 
 
 @router.patch("/{opp_id}", response_model=OpportunityDetail)

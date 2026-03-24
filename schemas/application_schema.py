@@ -30,3 +30,15 @@ class ApplicationDetail(ApplicationList):
 
     class Config:
         from_attributes = True
+
+
+class ApplicationWithStudent(BaseModel):
+    application_id: int
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str
+    status: str
+
+    class Config:
+        from_attributes = True

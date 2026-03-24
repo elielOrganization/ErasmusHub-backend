@@ -5,6 +5,7 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import User
 from models.application import Application
+from models.opportunity import Opportunity
 from models.document import Document
 from models.application_document import ApplicationDocument
 from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail
@@ -43,6 +44,16 @@ def create_application(
     data: ApplicationCreate,
     db: Session = Depends(get_session),
 ):
+    opportunity = db.get(Opportunity, data.opportunity_id)
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    if opportunity.status != "open":
+        raise HTTPException(status_code=400, detail="This opportunity is not open for applications")
+
+    if opportunity.filled_slots >= opportunity.max_slots:
+        raise HTTPException(status_code=400, detail="No available slots for this opportunity")
+
     existing = db.exec(
         select(Application)
         .where(Application.user_id == data.user_id)
@@ -57,6 +68,8 @@ def create_application(
         status="pending",
     )
     db.add(application)
+    opportunity.filled_slots += 1
+    db.add(opportunity)
     db.commit()
     db.refresh(application)
     return ApplicationDetail.model_validate(application)
