@@ -100,7 +100,7 @@ async def upload_documents(
     return created
 
 
-@router.get("/", response_model=List[DocumentRead])
+@router.get("", response_model=List[DocumentRead])
 def list_documents(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
