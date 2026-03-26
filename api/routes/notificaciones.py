@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlmodel import Session, select, func
 from typing import Optional
 from pydantic import BaseModel
@@ -10,6 +10,8 @@ from models.notification import Notification
 from schemas.notification_schema import NotificationRead
 from schemas.pagination import PaginatedResponse
 
+from schemas.notification_schema import NotificationCreate # O crea uno específico para anuncios
+from services.notification_service import notify_all_users_service
 
 class UnreadCount(BaseModel):
     count: int
@@ -90,3 +92,21 @@ def mark_as_read(
     db.commit()
     db.refresh(notif)
     return NotificationRead.model_validate(notif)
+
+@router.post("/broadcast", status_code=202)
+def broadcast_notification(
+    data: NotificationCreate, # Reutilizamos tu schema o usa uno nuevo sin user_id
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_session),
+):
+
+    # 2. Ejecutar el proceso en segundo plano
+    # Pasamos los datos que vienen del body (message_key, type, etc.)
+    background_tasks.add_task(
+        notify_all_users_service,
+        db=db,
+        message_key=data.message_key,
+        notif_type=data.type    
+    )
+
+    return {"detail": "Proceso de notificación masiva iniciado con éxito"}
