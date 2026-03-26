@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
 
 
@@ -14,6 +14,7 @@ class DocumentRead(BaseModel):
     name: str
     document_type: Optional[str] = None
     file_path: Optional[str] = None
+    state: Literal["pending", "approved", "rejected"]
     uploaded_at: datetime
 
     class Config:

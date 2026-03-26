@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime, timezone
 
 
@@ -11,5 +11,6 @@ class Document(SQLModel, table=True):
     name: str
     document_type: Optional[str] = None
     file_path: Optional[str] = None
+    state: Literal["pending", "approved", "rejected"] = Field(default="pending")
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
