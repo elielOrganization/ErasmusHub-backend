@@ -31,6 +31,8 @@ class UserUpdate(BaseModel):
     is_minor: Optional[bool] = None
     address: Optional[str] = None
     phone: Optional[str] = None
+    year: Optional[str] = None
+    grade: Optional[float] = None
 
 
 class UserPublic(UserBase):
@@ -42,6 +44,8 @@ class UserPublic(UserBase):
     phone: Optional[str] = None
     created_at: datetime
     role: Optional[Role] = None
+    year: Optional[str] = None
+    grade: Optional[float] = None
 
     class Config:
         from_attributes = True
