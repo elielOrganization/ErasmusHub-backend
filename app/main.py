@@ -18,6 +18,7 @@ try:
     from api.routes.applications import router as applications_router
     from api.routes.role import router as role_router
     from api.routes.documents import router as documents_router
+    from api.routes.calificacion import router as calificacion_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -64,3 +65,4 @@ app.include_router(opportunities_router)
 app.include_router(applications_router)
 app.include_router(role_router)
 app.include_router(documents_router)
+app.include_router(calificacion_router)

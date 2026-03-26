@@ -14,7 +14,6 @@ from .daily_log import DailyLog
 from .attendance import Attendance
 from .communication import Communication
 from .exemption import Exemption
-
 __all__ = [
     "User",
     "Role",
