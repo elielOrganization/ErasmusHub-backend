@@ -20,7 +20,7 @@ from models.daily_log import DailyLog
 from models.attendance import Attendance
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
-from core.security import get_password_hash
+from core.security import get_password_hash, get_rodne_cislo_hash
 
 router = APIRouter(tags=["Users"])
 
@@ -42,7 +42,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         password_hash=get_password_hash(user_in.password),
-        rodne_cislo=user_in.rodne_cislo,
+        rodne_cislo=get_rodne_cislo_hash(user_in.rodne_cislo),
         birth_date=user_in.birth_date,
         address=user_in.address,
         phone=user_in.phone,

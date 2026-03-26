@@ -22,6 +22,11 @@ def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
+def get_rodne_cislo_hash(rodneCislo: str) -> str:
+    rdn_bytes = rodneCislo.encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(rdn_bytes, salt).decode('utf-8')
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
