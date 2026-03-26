@@ -16,7 +16,7 @@ class DocumentRead(BaseModel):
     file_path: Optional[str] = None
     state: Literal["pending", "approved", "rejected"]
     uploaded_at: datetime
-    calificablle: bool = False
+    calificable: bool = False
     grade: Optional[float] = None
 
     class Config:
