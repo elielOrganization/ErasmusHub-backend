@@ -1,38 +1,54 @@
 import os
 import bcrypt
+import hmac
+import hashlib
+from cryptography.fernet import Fernet
 from datetime import datetime, timedelta, timezone
 from typing import Any, Union
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
-
 from core.database import get_session
 from models.user import User
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "tu_jwt_secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+# --- CONFIGURACIÓN DE ENCRIPTACIÓN Y HASH ---
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+if not ENCRYPTION_KEY:
+    ENCRYPTION_KEY = Fernet.generate_key() 
 
+cipher_suite = Fernet(ENCRYPTION_KEY)
+HMAC_SECRET_KEY = os.getenv("HMAC_SECRET_KEY", "llave-secreta-para-hash").encode('utf-8')
+
+# --- FUNCIONES PARA EL DNI ---
+def encrypt_data(data: str) -> str:
+    if not data: return data
+    return cipher_suite.encrypt(data.encode('utf-8')).decode('utf-8')
+
+def decrypt_data(encrypted_data: str) -> str:
+    if not encrypted_data: return encrypted_data
+    try:
+        return cipher_suite.decrypt(encrypted_data.encode('utf-8')).decode('utf-8')
+    except Exception:
+        return encrypted_data
+
+def get_deterministic_hash(data: str) -> str:
+    if not data: return data
+    return hmac.new(HMAC_SECRET_KEY, data.encode('utf-8'), hashlib.sha256).hexdigest()
+
+# --- FUNCIONES PARA LA CONTRASEÑA Y TOKENS ---
 def get_password_hash(password: str) -> str:
     pwd_bytes = password.encode('utf-8')
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
-def get_rodne_cislo_hash(rodneCislo: str) -> str:
-    rdn_bytes = rodneCislo.encode('utf-8')
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(rdn_bytes, salt).decode('utf-8')
-
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode('utf-8'),
-        hashed_password.encode('utf-8')
-    )
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def create_access_token(subject: Union[str, Any], role: str | None = None) -> str:

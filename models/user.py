@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 class User(SQLModel, table=True):
     __tablename__ = "user"
 
-    # Fields matching your SQL schema
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
-    rodne_cislo: str = Field(unique=True, index=True)
+    rodne_cislo: Optional[str] = None
+    rodne_cislo_hash: Optional[str] = Field(default=None, unique=True, index=True)
     email: str = Field(unique=True, index=True)
     password_hash: str
     first_name: str
@@ -38,14 +38,13 @@ class User(SQLModel, table=True):
     # Relationships
     roles: List["Role"] = Relationship(
         back_populates="users",
-        link_model=UserRole, # Must be the class, not a string "UserRole"
+        link_model=UserRole,
     )
     
     opportunities_created: List["Opportunity"] = Relationship(back_populates="creator")
     applications: List["Application"] = Relationship(back_populates="user")
     notifications: List["Notification"] = Relationship(back_populates="user")
     
-    # Matches the foreign keys in your internship table
     internships: List["Internship"] = Relationship(
         back_populates="student",
         sa_relationship_kwargs={"foreign_keys": "[Internship.student_id]"},
@@ -61,7 +60,6 @@ class User(SQLModel, table=True):
     
     communications_sent: List["Communication"] = Relationship(back_populates="sender")
     
-    # Matches the exemption table references
     exemptions: List["Exemption"] = Relationship(
         back_populates="student", # Cambiado de "user" a "student"
         sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"}, # Cambiado a "student_id"

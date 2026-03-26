@@ -20,29 +20,36 @@ from models.daily_log import DailyLog
 from models.attendance import Attendance
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from core.database import get_session
-from core.security import get_password_hash, get_rodne_cislo_hash
+from core.security import get_password_hash, encrypt_data, decrypt_data, get_deterministic_hash
 
 router = APIRouter(tags=["Users"])
 
 
 @router.post("/users/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
+    
     existing_user = db.exec(select(User).where(User.email == user_in.email)).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-
+    
     if user_in.rodne_cislo:
-        existing_dni = db.exec(select(User).where(User.rodne_cislo == user_in.rodne_cislo)).first()
+        search_hash = get_deterministic_hash(user_in.rodne_cislo)
+        existing_dni = db.exec(select(User).where(User.rodne_cislo_hash == search_hash)).first()
         if existing_dni:
-            raise HTTPException(status_code=400, detail="DNI already registered")
-        
+            raise HTTPException(status_code=400, detail="Rodne cislo already registered")
+            
+        encrypted_rod = encrypt_data(user_in.rodne_cislo)
+        hash_rod = search_hash
+    else:
+        raise HTTPException(status_code=400, detail="Rodne cislo is required")
 
     db_user = User(
         email=user_in.email,
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         password_hash=get_password_hash(user_in.password),
-        rodne_cislo=get_rodne_cislo_hash(user_in.rodne_cislo),
+        rodne_cislo=encrypted_rod,    
+        rodne_cislo_hash=hash_rod,     
         birth_date=user_in.birth_date,
         address=user_in.address,
         phone=user_in.phone,
@@ -67,9 +74,11 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     db.commit()
     db.refresh(db_user)
     
-    # Load roles for the response
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
-    user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
+    user_dict = db_user.model_dump(exclude={'roles'})
+    user_dict['rodne_cislo'] = decrypt_data(user_dict.get('rodne_cislo'))
+    
+    user_data = UserPublic.model_validate(user_dict)
     user_data.role = roles[0] if roles else None
     return user_data
 
@@ -78,11 +87,18 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
 def read_users(db: Session = Depends(get_session)):
     users = db.exec(select(User)).all()
     user_publics = []
+    
     for user in users:
         roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == user.id)).all()
-        user_data = UserPublic.model_validate(user.model_dump(exclude={'roles'}))
+        
+        user_dict = user.model_dump(exclude={'roles'})
+        if user_dict.get('rodne_cislo'):
+            user_dict['rodne_cislo'] = decrypt_data(user_dict['rodne_cislo'])
+            
+        user_data = UserPublic.model_validate(user_dict)
         user_data.role = roles[0] if roles else None
         user_publics.append(user_data)
+        
     return user_publics
 
 
@@ -166,16 +182,29 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
         password = update_data.pop("password")
         db_user.password_hash = get_password_hash(password)
 
+    if "rodne_cislo" in update_data:
+        new_dni = update_data.pop("rodne_cislo")
+        
+        if new_dni:
+            new_hash = get_deterministic_hash(new_dni)
+            
+            existing_dni = db.exec(select(User).where(User.rodne_cislo_hash == new_hash, User.id != user_id)).first()
+            if existing_dni:
+                raise HTTPException(status_code=400, detail="Rodne cislo already registered")
+                
+            db_user.rodne_cislo = encrypt_data(new_dni)
+            db_user.rodne_cislo_hash = new_hash
+        else:
+            db_user.rodne_cislo = None
+            db_user.rodne_cislo_hash = None
+
     if "role_id" in update_data:
         new_role_id = update_data.pop("role_id")
-
         role_exists = db.get(Role, new_role_id)
-
         if not role_exists:
             raise HTTPException(status_code=400, detail="Role not found")
         
         db.exec(delete(UserRole).where(UserRole.user_id == db_user.id)) 
-        
         new_user_role = UserRole(user_id=db_user.id, role_id=new_role_id)
         db.add(new_user_role)
 
@@ -185,8 +214,13 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
+
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == db_user.id)).all()
-    user_data = UserPublic.model_validate(db_user.model_dump(exclude={'roles'}))
+    
+    user_dict = db_user.model_dump(exclude={'roles'})
+    if user_dict.get('rodne_cislo'):
+        user_dict['rodne_cislo'] = decrypt_data(user_dict['rodne_cislo'])
+        
+    user_data = UserPublic.model_validate(user_dict)
     user_data.role = roles[0] if roles else None
     return user_data
