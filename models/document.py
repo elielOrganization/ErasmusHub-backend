@@ -14,3 +14,5 @@ class Document(SQLModel, table=True):
     state: Literal["pending", "approved", "rejected"] = Field(default="pending")
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    calificable: bool = False
+    grade: Optional[float]
