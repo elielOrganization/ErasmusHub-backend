@@ -17,7 +17,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# --- CONFIGURACIÓN DE ENCRIPTACIÓN Y HASH ---
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 if not ENCRYPTION_KEY:
     ENCRYPTION_KEY = Fernet.generate_key() 
@@ -25,7 +24,7 @@ if not ENCRYPTION_KEY:
 cipher_suite = Fernet(ENCRYPTION_KEY)
 HMAC_SECRET_KEY = os.getenv("HMAC_SECRET_KEY", "llave-secreta-para-hash").encode('utf-8')
 
-# --- FUNCIONES PARA EL DNI ---
+
 def encrypt_data(data: str) -> str:
     if not data: return data
     return cipher_suite.encrypt(data.encode('utf-8')).decode('utf-8')

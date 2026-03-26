@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from core.database import get_session
-from core.security import create_access_token, get_current_user
+from core.security import create_access_token, get_current_user, decrypt_data 
 from models.user import User
 from models.role import Role
 from models.user_role import UserRole
@@ -23,7 +23,6 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Cargamos el rol para inyectarlo en el token y evitar llamadas innecesarias a /auth/me.
     roles = db.exec(
         select(Role)
         .join(UserRole, Role.id == UserRole.role_id)
@@ -37,8 +36,11 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
 
 @router.get("/me", response_model=UserPublic)
 def me(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)):
-    # Cargar roles del usuario
     roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == current_user.id)).all()
-    user_data = UserPublic.model_validate(current_user.model_dump())
-    user_data.role = roles[0] if roles else None  # Asumiendo un solo rol
+    user_dict = current_user.model_dump(exclude={'roles'})
+    if user_dict.get('rodne_cislo'):
+        user_dict['rodne_cislo'] = decrypt_data(user_dict['rodne_cislo'])
+        
+    user_data = UserPublic.model_validate(user_dict)
+    user_data.role = roles[0] if roles else None
     return user_data
