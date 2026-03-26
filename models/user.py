@@ -32,6 +32,9 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    year: Optional[str] = None
+    grade: Optional[float] = None
+
     # Relationships
     roles: List["Role"] = Relationship(
         back_populates="users",

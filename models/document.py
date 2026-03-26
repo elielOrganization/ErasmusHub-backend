@@ -21,3 +21,5 @@ class Document(SQLModel, table=True):
     state: DocumentState = Field(default=DocumentState.pending)
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    calificable: bool = False
+    grade: Optional[float]
