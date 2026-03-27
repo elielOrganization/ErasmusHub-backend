@@ -11,7 +11,7 @@ from models.user_role import UserRole
 from core.database import get_session
 from core.security import get_current_user
 from models.user import User
-from models.document import Document, DocumentReviewUpdate, DocumentState
+from models.document import Document, DocumentReviewUpdate, DocumentState, DocumentType
 from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
@@ -29,15 +29,16 @@ async def upload_documents(
     grades_certificate: Optional[UploadFile] = File(None),
     cover_letter: Optional[UploadFile] = File(None),
     disability_certificate: Optional[UploadFile] = File(None),
-    current_user: User = Depends(get_current_user),
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
+    
     incoming_files = {
-        "id_document_front": id_document_front,
-        "id_document_back": id_document_back,
-        "grades_certificate": grades_certificate,
-        "cover_letter": cover_letter,
-        "disability_certificate": disability_certificate,
+        DocumentType.id_document_front.value: id_document_front,
+        DocumentType.id_document_back.value: id_document_back,
+        DocumentType.grade_certificate.value: grades_certificate, 
+        DocumentType.cover_letter.value: cover_letter,
+        DocumentType.disability_certificate.value: disability_certificate,
     }
 
     user_dir = os.path.join(UPLOAD_DIR, current_user.rodne_cislo.replace("/", "_"))
@@ -68,7 +69,11 @@ async def upload_documents(
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        # Si ya existe un documento del mismo tipo para este usuario, sobreescribir
+        is_calificable = doc_type in [
+            DocumentType.grade_certificate.value, 
+            DocumentType.cover_letter.value
+        ]
+
         existing = db.exec(
             select(Document).where(
                 Document.user_id == current_user.id,
@@ -77,7 +82,6 @@ async def upload_documents(
         ).first()
 
         if existing:
-            # Borrar el archivo antiguo del disco si existe
             if existing.file_path and os.path.exists(existing.file_path):
                 os.remove(existing.file_path)
             existing.name = original_name
@@ -91,6 +95,7 @@ async def upload_documents(
                 user_id=current_user.id,
                 name=original_name,
                 document_type=doc_type,
+                calificable=is_calificable,
                 file_path=file_path.replace("\\", "/"),
             )
             db.add(document)
@@ -193,6 +198,14 @@ def review_document(
         )
     
     document.state = review_data.state
+
+    if not document.calificable and document.grade:
+        raise HTTPException(
+            status_code=400, 
+            detail="El documento no es calificable."
+        )
+    
+    document.grade = int
 
     db.add(document)
     db.commit()
