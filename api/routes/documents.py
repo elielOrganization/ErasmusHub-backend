@@ -196,18 +196,27 @@ def review_document(
             status_code=400, 
             detail="El estado de revisión debe ser 'approved' o 'rejected'."
         )
-    
-    document.state = review_data.state
 
     if review_data.grade is not None:
+        if review_data.grade < 1 or review_data.grade > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="La nota del documento debe ser un número del 1 al 10."
+            )
         if not document.calificable:
             raise HTTPException(
                 status_code=400,
-                detail="No se puede asignar una nota porque este documento no es calificable."
+                detail="El documento no es calificable, no debe tener nota."
             )
+        
         document.grade = review_data.grade
-
+    
     document.state = review_data.state
+    if document.state == DocumentState.rejected and document.grade:
+        raise HTTPException(
+            status_code=400,
+            detail="Un documento rechazado no debe tener nota."
+        )
      
     db.add(document)
     db.commit()
