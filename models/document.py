@@ -12,6 +12,7 @@ class DocumentState(str, Enum):
 
 class DocumentReviewUpdate(BaseModel):
     state: DocumentState
+    grade: Optional[float] = None
 
 class Document(SQLModel, table=True):
     __tablename__ = "document"
