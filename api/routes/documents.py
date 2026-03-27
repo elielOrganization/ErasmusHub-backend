@@ -151,8 +151,7 @@ def get_user_documents(
     db: Session = Depends(get_session)
 ):
     rol_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == user_id)).first()  
-    rol = db.exec(select(Role).where(Role.id == rol_id))
-
+    rol = db.exec(select(Role.name).where(Role.id == rol_id)).first()
     if rol != "Student":
         raise HTTPException(status_code=401, detail="El usuario seleccionado no es un estudiante")
 
