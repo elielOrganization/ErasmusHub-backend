@@ -6,7 +6,8 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
-
+from models.role import Role
+from models.user_role import UserRole
 from core.database import get_session
 from core.security import get_current_user
 from models.user import User
@@ -142,6 +143,21 @@ def get_document(
     if not document or document.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Documento no encontrado.")
     return DocumentRead.model_validate(document)
+
+@router.get("/user/{user_id}")
+def get_user_documents(
+    user_id: int,
+    db: Session = Depends(get_session)
+):
+    rol_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == user_id)).first()  
+    rol = db.exec(select(Role.name).where(Role.id == rol_id)).first()
+    if rol != "Student":
+        raise HTTPException(status_code=401, detail="El usuario seleccionado no es un estudiante")
+
+    documents = db.exec(
+        select(Document).where(Document.user_id == user_id)
+    ).all()
+    return [DocumentRead.model_validate(d) for d in documents]
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
