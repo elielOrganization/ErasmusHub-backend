@@ -12,7 +12,7 @@ from core.security import get_current_user
 from models.user_role import UserRole
 from models.role import Role
 from models.user import User
-from models.document import Document
+from models.document import Document, DocumentReviewUpdate, DocumentState
 from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
