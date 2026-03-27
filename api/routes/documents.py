@@ -9,6 +9,8 @@ from sqlmodel import Session, select
 
 from core.database import get_session
 from core.security import get_current_user
+from models.user_role import UserRole
+from models.role import Role
 from models.user import User
 from models.document import Document
 from schemas.document_schema import DocumentRead
@@ -143,6 +145,21 @@ def get_document(
         raise HTTPException(status_code=404, detail="Documento no encontrado.")
     return DocumentRead.model_validate(document)
 
+@router.get("/user/{user_id}")
+def get_user_documents(
+    user_id: int,
+    db: Session = Depends(get_session)
+):
+    rol_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == user_id)).first()  
+    rol = db.exec(select(Role).where(Role.id == rol_id))
+
+    if rol != "Student":
+        raise HTTPException(status_code=401, detail="El usuario seleccionado no es un estudiante")
+
+    documents = db.exec(
+        select(Document).where(Document.user_id == user_id)
+    ).all()
+    return [DocumentRead.model_validate(d) for d in documents]
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(
