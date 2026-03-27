@@ -4,6 +4,12 @@ from typing import Optional
 from datetime import datetime, timezone
 from enum import Enum
 
+class DocumentType(str, Enum):
+    id_document_front = "id_front"
+    id_document_back = "id_back"
+    grade_certificate = "grade_certificate" 
+    cover_letter = "cover_letter"
+    disability_certificate = "disability_certificate"
 
 class DocumentState(str, Enum):
     pending = "pending"
@@ -19,7 +25,7 @@ class Document(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     name: str
-    document_type: Optional[str] = None
+    document_type: DocumentType
     file_path: Optional[str] = None
     state: DocumentState = Field(default=DocumentState.pending)
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
