@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from core.database import get_session
 from core.security import get_current_user
 from models.user import User
-from models.document import Document
+from models.document import Document, DocumentReviewUpdate, DocumentState
 from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
@@ -159,3 +159,27 @@ def delete_document(
 
     db.delete(document)
     db.commit()
+
+@router.patch("/{doc_id}/review", response_model=Document)
+def review_document(
+    doc_id: int,
+    review_data: DocumentReviewUpdate,
+    db: Session = Depends(get_session)
+):
+    document = db.get(Document, doc_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Documento no encontrado.")
+    
+    if review_data.state == DocumentState.pending:
+        raise HTTPException(
+            status_code=400, 
+            detail="El estado de revisión debe ser 'approved' o 'rejected'."
+        )
+    
+    document.state = review_data.state
+
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+    
+    return document

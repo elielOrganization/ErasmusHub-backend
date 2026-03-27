@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
 from enum import Enum
@@ -9,6 +10,8 @@ class DocumentState(str, Enum):
     approved = "approved"
     rejected = "rejected"
 
+class DocumentReviewUpdate(BaseModel):
+    state: DocumentState
 
 class Document(SQLModel, table=True):
     __tablename__ = "document"
