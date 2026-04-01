@@ -18,6 +18,7 @@ class DocumentRead(BaseModel):
     uploaded_at: datetime
     calificable: bool = False
     grade: Optional[float] = None
+    rejection_reason: Optional[str] = None
 
     class Config:
         from_attributes = True

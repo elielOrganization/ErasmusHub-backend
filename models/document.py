@@ -19,6 +19,7 @@ class DocumentState(str, Enum):
 class DocumentReviewUpdate(BaseModel):
     state: DocumentState
     grade: Optional[float] = None
+    rejection_reason: Optional[str] = None
 
 class Document(SQLModel, table=True):
     __tablename__ = "document"
@@ -32,4 +33,5 @@ class Document(SQLModel, table=True):
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     calificable: bool = False
-    grade: Optional[float]
+    grade: Optional[float] = None
+    rejection_reason: Optional[str] = None
