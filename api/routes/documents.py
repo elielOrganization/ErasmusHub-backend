@@ -65,6 +65,7 @@ async def upload_documents(
     grades_certificate: Optional[UploadFile] = File(None),
     cover_letter: Optional[UploadFile] = File(None),
     disability_certificate: Optional[UploadFile] = File(None),
+    parental_authorization: Optional[UploadFile] = File(None),
     current_user = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
@@ -75,6 +76,7 @@ async def upload_documents(
         DocumentType.grade_certificate.value: grades_certificate, 
         DocumentType.cover_letter.value: cover_letter,
         DocumentType.disability_certificate.value: disability_certificate,
+        DocumentType.parental_authorization.value: parental_authorization,
     }
 
     user_dir = os.path.join(UPLOAD_DIR, current_user.rodne_cislo.replace("/", "_"))

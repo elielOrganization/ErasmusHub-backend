@@ -19,7 +19,7 @@ def login(credentials: LoginRequest, db: Session = Depends(get_session)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="DNI o contraseña incorrectos",
+            detail="Rodne Cislo or password not valid",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

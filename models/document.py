@@ -10,6 +10,7 @@ class DocumentType(str, Enum):
     grade_certificate = "grade_certificate" 
     cover_letter = "cover_letter"
     disability_certificate = "disability_certificate"
+    parental_authorization = "parental_authorization"
 
 class DocumentState(str, Enum):
     pending = "pending"
