@@ -10,7 +10,7 @@ from models.notification import Notification
 from schemas.notification_schema import NotificationRead
 from schemas.pagination import PaginatedResponse
 
-from schemas.notification_schema import NotificationCreate # O crea uno específico para anuncios
+from schemas.notification_schema import NotificationCreate, NotificationBroadcast # O crea uno específico para anuncios
 from services.notification_service import notify_all_users_service
 
 class UnreadCount(BaseModel):
@@ -95,7 +95,7 @@ def mark_as_read(
 
 @router.post("/broadcast", status_code=202)
 def broadcast_notification(
-    data: NotificationCreate, # Reutilizamos tu schema o usa uno nuevo sin user_id
+    data: NotificationBroadcast,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_session),
 ):

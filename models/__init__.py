@@ -14,6 +14,7 @@ from .daily_log import DailyLog
 from .attendance import Attendance
 from .communication import Communication
 from .exemption import Exemption
+from .selection_process import SelectionProcess
 __all__ = [
     "User",
     "Role",
@@ -31,4 +32,5 @@ __all__ = [
     "Attendance",
     "Communication",
     "Exemption",
+    "SelectionProcess",
 ]

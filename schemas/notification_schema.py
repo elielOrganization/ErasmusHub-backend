@@ -10,6 +10,12 @@ class NotificationCreate(BaseModel):
     type: str
 
 
+class NotificationBroadcast(BaseModel):
+    message_key: str
+    type: str
+    params: Optional[str] = None
+
+
 class NotificationRead(BaseModel):
     id: int
     message_key: str
