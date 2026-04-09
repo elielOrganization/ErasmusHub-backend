@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, delete
 from sqlalchemy import or_
 from typing import List
+from datetime import date
+
 
 from models.user import User
 from models.role import Role
@@ -59,7 +61,13 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     db.add(db_user)
     db.flush()
 
-    if user_in.is_minor:
+    today = date.today()
+
+    age = today.year - user_in.birth_date.year - (
+        (today.month, today.day) < (user_in.birth_date.month, user_in.birth_date.day)
+    )
+
+    if age < 15:
         db_user_rol = UserRole(
             user_id=db_user.id,
             role_id=4
