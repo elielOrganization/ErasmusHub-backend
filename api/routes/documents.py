@@ -12,6 +12,7 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import User
 from models.document import Document, DocumentReviewUpdate, DocumentState, DocumentType
+from models.interview import Interview
 from schemas.document_schema import DocumentRead
 from services.notification_service import create_notification
 
@@ -202,11 +203,13 @@ def get_pending_documents(
 
     # Agrupar por user_id
     from collections import defaultdict
-    doc_map: dict = defaultdict(lambda: {"pending": 0, "approved": 0, "rejected": 0, "total": 0, "types": set()})
+    doc_map: dict = defaultdict(lambda: {"pending": 0, "approved": 0, "rejected": 0, "total": 0, "types": set(), "mandatory_states": {}})
     for doc in documents:
         doc_map[doc.user_id][doc.state.value] += 1
         doc_map[doc.user_id]["total"] += 1
         doc_map[doc.user_id]["types"].add(doc.document_type)
+        if doc.document_type in MANDATORY_DOC_TYPES:
+            doc_map[doc.user_id]["mandatory_states"][doc.document_type] = doc.state.value
 
     # Solo incluir alumnos que tienen TODOS los documentos obligatorios subidos
     complete_user_ids = [
@@ -221,9 +224,20 @@ def get_pending_documents(
         select(User).where(User.id.in_(complete_user_ids))
     ).all()
 
+    interviews = db.exec(
+        select(Interview).where(Interview.user_id.in_(complete_user_ids))
+    ).all()
+    interview_map = {iv.user_id: iv for iv in interviews}
+
     result = []
     for user in users:
         counts = doc_map[user.id]
+        mandatory_states = counts["mandatory_states"]
+        all_approved = (
+            set(mandatory_states.keys()) == MANDATORY_DOC_TYPES
+            and all(v == "approved" for v in mandatory_states.values())
+        )
+        interview = interview_map.get(user.id)
         result.append({
             "user_id": user.id,
             "user_name": f"{user.first_name} {user.last_name}",
@@ -232,6 +246,10 @@ def get_pending_documents(
             "approved": counts["approved"],
             "rejected": counts["rejected"],
             "total": counts["total"],
+            "all_approved": all_approved,
+            "interview_grade": interview.grade if interview else None,
+            "interview_status": interview.status if interview else "pending",
+            "interview_rejection_reason": interview.rejection_reason if interview else None,
         })
 
     return sorted(result, key=lambda x: x["pending"], reverse=True)
