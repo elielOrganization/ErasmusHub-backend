@@ -21,6 +21,8 @@ from models.follow_up import FollowUp
 from models.daily_log import DailyLog
 from models.attendance import Attendance
 from schemas.user_schema import UserCreate, UserPublic, UserUpdate
+from models.calificacion import Calificacion
+from models.interview import Interview, InterviewStatus
 from core.database import get_session
 from core.security import get_password_hash, encrypt_data, decrypt_data, get_deterministic_hash
 
@@ -90,6 +92,34 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_session)):
     user_data.role = roles[0] if roles else None
     return user_data
 
+@router.get("/users/graded", response_model=List[UserPublic])
+def get_graded_users(db: Session = Depends(get_session)):
+    """Devuelve todos los usuarios que tienen una nota final, ordenados de mayor a menor."""
+    
+    statement = select(User).where(User.final_grade.isnot(None))
+    graded_users = db.exec(statement).all()
+    
+    user_publics = []
+    
+    for user in graded_users:
+        roles = db.exec(
+            select(Role)
+            .join(UserRole, Role.id == UserRole.role_id)
+            .where(UserRole.user_id == user.id)
+        ).all()
+        
+        user_dict = user.model_dump(exclude={'roles'})
+        if user_dict.get('rodne_cislo'):
+            user_dict['rodne_cislo'] = decrypt_data(user_dict['rodne_cislo'])
+            
+        user_data = UserPublic.model_validate(user_dict)
+        user_data.role = roles[0] if roles else None
+        
+        user_publics.append(user_data)
+        
+    user_publics.sort(key=lambda x: x.final_grade, reverse=True)
+        
+    return user_publics
 
 @router.get("/users/", response_model=List[UserPublic])
 def read_users(db: Session = Depends(get_session)):
@@ -232,3 +262,75 @@ def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_ses
     user_data = UserPublic.model_validate(user_dict)
     user_data.role = roles[0] if roles else None
     return user_data
+
+@router.post("/users/calculate-all-grades", response_model=List[UserPublic])
+def calculate_all_users_final_grade(db: Session = Depends(get_session)):
+    calificacion = db.exec(select(Calificacion)).first()
+    if not calificacion:
+        raise HTTPException(
+            status_code=404, 
+            detail="Calification weights are not configured in the system"
+        )
+    
+    statement = (
+        select(User)
+        .join(Interview, User.id == Interview.user_id)
+        .where(
+            Interview.status == InterviewStatus.passed
+        )
+    )
+    eligible_users = db.exec(statement).all()
+
+    if not eligible_users:
+        return []
+
+    updated_users_response = []
+
+    for user in eligible_users:
+        final_grade = 0.0
+
+        interview = db.exec(
+            select(Interview).where(
+                Interview.user_id == user.id, 
+                Interview.status == InterviewStatus.passed,
+                Interview.grade.isnot(None)
+            )
+        ).first()
+
+        if interview:
+            final_grade += interview.grade * (calificacion.interview / 100)
+
+        documents = db.exec(
+            select(Document).where(
+                Document.user_id == user.id, 
+                Document.state == "approved" 
+            )
+        ).all()
+
+        for doc in documents:
+            peso_porcentaje = getattr(calificacion, doc.document_type, 0)
+            nota_documento = doc.grade if doc.grade is not None else 10.0
+            
+            final_grade += nota_documento * (peso_porcentaje / 100)
+
+        user.final_grade = round(final_grade, 2)
+        db.add(user)
+
+        roles = db.exec(
+            select(Role)
+            .join(UserRole, Role.id == UserRole.role_id)
+            .where(UserRole.user_id == user.id)
+        ).all()
+        
+        user_dict = user.model_dump(exclude={'roles'})
+        if user_dict.get('rodne_cislo'):
+            user_dict['rodne_cislo'] = decrypt_data(user_dict['rodne_cislo'])
+            
+        user_data = UserPublic.model_validate(user_dict)
+        user_data.role = roles[0] if roles else None
+        
+        updated_users_response.append(user_data)
+
+    db.commit()
+    
+    return updated_users_response
