@@ -89,6 +89,24 @@ def update_interview(
             params={"grade": str(interview.grade)},
         )
 
+    elif data.status == "pending":
+        interview.status = "pending"
+        interview.grade = None
+        interview.rejection_reason = None
+        interview.reviewed_by = current_user.id
+        interview.reviewed_at = datetime.now(timezone.utc)
+        db.add(interview)
+        db.commit()
+        db.refresh(interview)
+
+        create_notification(
+            db=db,
+            user_id=user_id,
+            message_key="interview_readmitted",
+            notif_type="application_update",
+            params={},
+        )
+
     else:
         raise HTTPException(status_code=400, detail="Debes proporcionar una nota o rechazar al alumno.")
 
