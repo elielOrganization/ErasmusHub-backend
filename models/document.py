@@ -9,6 +9,7 @@ class DocumentType(str, Enum):
     id_document_back = "id_back"
     grade_certificate = "grade_certificate" 
     motivation_letter = "motivation_letter"
+    cover_letter = "cover_letter"  # legacy alias, kept for backwards compatibility
     disability_certificate = "disability_certificate"
     parental_authorization = "parental_authorization"
     language_certificate = "language_certificate"
