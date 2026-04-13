@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .internship import Internship
     from .communication import Communication
     from .exemption import Exemption
+    from .interview import Interview
 
 
 class User(SQLModel, table=True):
@@ -33,7 +34,7 @@ class User(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     year: Optional[str] = None
-    grade: Optional[float] = None
+    final_grade: Optional[float] = None
 
     # Relationships
     roles: List["Role"] = Relationship(
@@ -61,6 +62,16 @@ class User(SQLModel, table=True):
     communications_sent: List["Communication"] = Relationship(back_populates="sender")
     
     exemptions: List["Exemption"] = Relationship(
-        back_populates="student", # Cambiado de "user" a "student"
-        sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"}, # Cambiado a "student_id"
+        back_populates="student", 
+        sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"},
+    )
+
+    interviews: List["Interview"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={"foreign_keys": "[Interview.user_id]"}
+    )
+    
+    interviews_reviewed: List["Interview"] = Relationship(
+        back_populates="reviewer",
+        sa_relationship_kwargs={"foreign_keys": "Interview.reviewed_by"}
     )

@@ -27,7 +27,7 @@ MANDATORY_DOC_TYPES = {
     DocumentType.id_document_front.value,
     DocumentType.id_document_back.value,
     DocumentType.grade_certificate.value,
-    DocumentType.cover_letter.value,
+    DocumentType.motivation_letter.value,
 }
 
 REVIEWER_ROLE_KEYWORDS = ("admin", "teacher", "profesor", "professor", "coordinator", "coordinador")
@@ -64,7 +64,8 @@ async def upload_documents(
     id_document_front: Optional[UploadFile] = File(None),
     id_document_back: Optional[UploadFile] = File(None),
     grades_certificate: Optional[UploadFile] = File(None),
-    cover_letter: Optional[UploadFile] = File(None),
+    motivation_letter: Optional[UploadFile] = File(None),
+    language_certificate: Optional[UploadFile] = File(None),
     disability_certificate: Optional[UploadFile] = File(None),
     parental_authorization: Optional[UploadFile] = File(None),
     current_user = Depends(get_current_user),
@@ -75,9 +76,10 @@ async def upload_documents(
         DocumentType.id_document_front.value: id_document_front,
         DocumentType.id_document_back.value: id_document_back,
         DocumentType.grade_certificate.value: grades_certificate, 
-        DocumentType.cover_letter.value: cover_letter,
+        DocumentType.motivation_letter.value: motivation_letter,
         DocumentType.disability_certificate.value: disability_certificate,
         DocumentType.parental_authorization.value: parental_authorization,
+        DocumentType.language_certificate.value: language_certificate
     }
 
     user_dir = os.path.join(UPLOAD_DIR, current_user.rodne_cislo.replace("/", "_"))
@@ -110,7 +112,8 @@ async def upload_documents(
 
         is_calificable = doc_type in [
             DocumentType.grade_certificate.value, 
-            DocumentType.cover_letter.value
+            DocumentType.motivation_letter.value,
+            DocumentType.language_certificate.value
         ]
 
         existing = db.exec(

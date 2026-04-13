@@ -8,9 +8,11 @@ class DocumentType(str, Enum):
     id_document_front = "id_front"
     id_document_back = "id_back"
     grade_certificate = "grade_certificate" 
-    cover_letter = "cover_letter"
+    motivation_letter = "motivation_letter"
     disability_certificate = "disability_certificate"
     parental_authorization = "parental_authorization"
+    language_certificate = "language_certificate"
+    
 
 class DocumentState(str, Enum):
     pending = "pending"
