@@ -314,14 +314,10 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
 
         # Track which calificacion fields have already been counted (avoid double-counting)
         counted_fields: set = set()
-        debug_lines = [f"[GRADE DEBUG] user={user.id} ({user.first_name} {user.last_name})"]
-        if interview:
-            debug_lines.append(f"  interview grade={interview.grade} peso={calificacion.interview} contrib={interview.grade * calificacion.interview}")
         for doc in documents:
             doc_type_key = doc.document_type.value if hasattr(doc.document_type, "value") else str(doc.document_type)
             cal_field = DOC_TYPE_TO_CALIFICACION.get(doc_type_key, doc_type_key)
             if cal_field in counted_fields:
-                debug_lines.append(f"  SKIP doc_type={doc_type_key} (already counted as {cal_field})")
                 continue
             peso = getattr(calificacion, cal_field, 0)
             if peso > 0:
@@ -329,14 +325,9 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
                 nota = doc.grade if doc.grade is not None else 10.0
                 weighted_sum += nota * peso
                 counted_fields.add(cal_field)
-                debug_lines.append(f"  doc_type={doc_type_key} cal_field={cal_field} grade_in_db={doc.grade} nota_used={nota} peso={peso} contrib={nota*peso}")
-            else:
-                debug_lines.append(f"  doc_type={doc_type_key} cal_field={cal_field} peso=0 (no weight)")
 
         # Divide by 100 — weights always sum to 100, missing docs contribute 0
         user.final_grade = round(weighted_sum / 100, 2)
-        debug_lines.append(f"  => weighted_sum={weighted_sum} final_grade={user.final_grade}")
-        print("\n".join(debug_lines), flush=True)
         db.add(user)
 
         roles = db.exec(
