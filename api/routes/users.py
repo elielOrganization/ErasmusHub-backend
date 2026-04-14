@@ -286,34 +286,50 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
 
     updated_users_response = []
 
+    # Map legacy/alias doc types to their calificacion field name
+    DOC_TYPE_TO_CALIFICACION = {
+        "cover_letter": "motivation_letter",  # legacy alias
+    }
+
     for user in eligible_users:
-        final_grade = 0.0
+        weighted_sum = 0.0
+        total_weight = 0.0
 
         interview = db.exec(
             select(Interview).where(
-                Interview.user_id == user.id, 
+                Interview.user_id == user.id,
                 Interview.status == InterviewStatus.passed,
                 Interview.grade.isnot(None)
             )
         ).first()
 
         if interview:
-            final_grade += interview.grade * (calificacion.interview / 100)
+            weighted_sum += interview.grade * calificacion.interview
+            total_weight += calificacion.interview
 
         documents = db.exec(
             select(Document).where(
-                Document.user_id == user.id, 
-                Document.state == "approved" 
+                Document.user_id == user.id,
+                Document.state == "approved"
             )
         ).all()
 
+        # Track which calificacion fields have already been counted (avoid double-counting)
+        counted_fields: set = set()
         for doc in documents:
-            peso_porcentaje = getattr(calificacion, doc.document_type, 0)
-            nota_documento = doc.grade if doc.grade is not None else 10.0
-            
-            final_grade += nota_documento * (peso_porcentaje / 100)
+            doc_type_key = str(doc.document_type)
+            cal_field = DOC_TYPE_TO_CALIFICACION.get(doc_type_key, doc_type_key)
+            if cal_field in counted_fields:
+                continue
+            peso = getattr(calificacion, cal_field, 0)
+            if peso > 0:
+                nota = doc.grade if doc.grade is not None else 0.0
+                weighted_sum += nota * peso
+                total_weight += peso
+                counted_fields.add(cal_field)
 
-        user.final_grade = round(final_grade, 2)
+        # Normalize over applicable weights so that having all docs at 10 always gives 10
+        user.final_grade = round(weighted_sum / total_weight, 2) if total_weight > 0 else None
         db.add(user)
 
         roles = db.exec(
