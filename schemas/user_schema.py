@@ -46,6 +46,7 @@ class UserPublic(UserBase):
     role: Optional[Role] = None
     year: Optional[str] = None
     grade: Optional[float] = None
+    final_grade: Optional[float] = None
 
     class Config:
         from_attributes = True
