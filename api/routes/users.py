@@ -315,7 +315,7 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
         # Track which calificacion fields have already been counted (avoid double-counting)
         counted_fields: set = set()
         for doc in documents:
-            doc_type_key = str(doc.document_type)
+            doc_type_key = doc.document_type.value if hasattr(doc.document_type, "value") else str(doc.document_type)
             cal_field = DOC_TYPE_TO_CALIFICACION.get(doc_type_key, doc_type_key)
             if cal_field in counted_fields:
                 continue
