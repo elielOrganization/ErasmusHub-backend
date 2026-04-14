@@ -321,7 +321,8 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
                 continue
             peso = getattr(calificacion, cal_field, 0)
             if peso > 0:
-                nota = doc.grade if doc.grade is not None else 0.0
+                # Calificable docs use their grade; non-calificable approved docs count as 10
+                nota = doc.grade if doc.grade is not None else 10.0
                 weighted_sum += nota * peso
                 counted_fields.add(cal_field)
 
