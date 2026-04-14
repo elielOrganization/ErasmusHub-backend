@@ -293,7 +293,6 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
 
     for user in eligible_users:
         weighted_sum = 0.0
-        total_weight = 0.0
 
         interview = db.exec(
             select(Interview).where(
@@ -305,7 +304,6 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
 
         if interview:
             weighted_sum += interview.grade * calificacion.interview
-            total_weight += calificacion.interview
 
         documents = db.exec(
             select(Document).where(
@@ -325,11 +323,10 @@ def calculate_all_users_final_grade(db: Session = Depends(get_session)):
             if peso > 0:
                 nota = doc.grade if doc.grade is not None else 0.0
                 weighted_sum += nota * peso
-                total_weight += peso
                 counted_fields.add(cal_field)
 
-        # Normalize over applicable weights so that having all docs at 10 always gives 10
-        user.final_grade = round(weighted_sum / total_weight, 2) if total_weight > 0 else None
+        # Divide by 100 — weights always sum to 100, missing docs contribute 0
+        user.final_grade = round(weighted_sum / 100, 2)
         db.add(user)
 
         roles = db.exec(
