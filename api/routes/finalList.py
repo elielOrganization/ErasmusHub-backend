@@ -18,7 +18,7 @@ ALLOWED_PUBLISHER_ROLES = ("admin", "coordinator", "tutor", "co-tutor")
 
 @router.post("/publish")
 def publish_final_list(
-    
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_session)
 ):
     """
@@ -51,7 +51,7 @@ def publish_final_list(
                 last_name=user.last_name,
                 year=user.year,
                 final_grade=user.final_grade,
-                published_by=1
+                published_by=current_user.id
             )
             db.add(snapshot)
             new_records.append(snapshot)
