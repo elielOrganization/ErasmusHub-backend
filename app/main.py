@@ -21,6 +21,7 @@ try:
     from api.routes.selection_process import router as selection_process_router    
     from api.routes.calificacion import router as calificacion_router
     from api.routes.interviews import router as interviews_router
+    from api.routes.finalList import router as Final_list_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -70,3 +71,4 @@ app.include_router(documents_router)
 app.include_router(calificacion_router)
 app.include_router(selection_process_router)
 app.include_router(interviews_router)
+app.include_router(Final_list_router)
