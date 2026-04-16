@@ -423,7 +423,7 @@ def review_document(
             message_key="doc_rejected",
             notif_type="application_update",
             params={
-                "doc_type": doc_type_label,
+                "doc_type": document.document_type,
                 "reason": review_data.rejection_reason or "",
             },
         )
