@@ -52,3 +52,8 @@ class OpportunityDetail(OpportunityList):
 
     class Config:
         from_attributes = True
+
+class OpportunityDelete(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None

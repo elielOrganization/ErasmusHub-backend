@@ -7,9 +7,10 @@ from core.security import get_current_user
 from models.user import User
 from models.opportunity import Opportunity
 from models.application import Application
-from schemas.opportunity_schema import OpportunityCreate, OpportunityList, OpportunityDetail, OpportunityUpdate
+from schemas.opportunity_schema import OpportunityCreate, OpportunityList, OpportunityDetail, OpportunityUpdate, OpportunityDelete
 from schemas.application_schema import ApplicationWithStudent
 from schemas.pagination import PaginatedResponse
+from models.user_role import UserRole
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
 
@@ -118,3 +119,26 @@ def update_opportunity(
     db.commit()
     db.refresh(opp)
     return OpportunityDetail.model_validate(opp)
+
+@router.delete("/{opp_id}", response_model=OpportunityDelete)
+def delete_opportunity(
+    opp_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session)
+):
+    opp = db.get(Opportunity, opp_id)
+
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    role = db.exec(select(UserRole).where(UserRole.user_id == current_user.id)).first()
+
+    if role.role_id != 1:
+        raise HTTPException(status_code=403, detail="You have no rights to delete an opportunity")
+    
+    response_data = OpportunityDelete.model_validate(opp)
+
+    db.delete(opp)
+    db.commit()
+    return response_data
+    
