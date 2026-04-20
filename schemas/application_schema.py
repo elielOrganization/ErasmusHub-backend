@@ -35,6 +35,8 @@ class ApplicationDetail(ApplicationList):
 class ApplicationWithStudent(BaseModel):
     application_id: int
     user_id: int
+    opportunity_id: int
+    opportunity_name: str
     first_name: str
     last_name: str
     email: str
@@ -42,3 +44,7 @@ class ApplicationWithStudent(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ReassignRequest(BaseModel):
+    user_id: int
+    new_opportunity_id: int

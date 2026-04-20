@@ -86,6 +86,8 @@ def list_opportunity_applications(
     return [
         ApplicationWithStudent(
             application_id=app.id,
+            opportunity_id=opp_id,
+            opportunity_name=opp.name,
             user_id=user.id,
             first_name=user.first_name,
             last_name=user.last_name,

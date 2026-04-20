@@ -8,7 +8,7 @@ from models.application import Application
 from models.opportunity import Opportunity
 from models.document import Document
 from models.application_document import ApplicationDocument
-from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail
+from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail, ApplicationWithStudent, ReassignRequest
 from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
@@ -25,6 +25,31 @@ def list_my_applications(
         .order_by(Application.applied_at.desc())
     ).all()
     return [ApplicationList.model_validate(a) for a in items]
+
+
+@router.get("/all", response_model=list[ApplicationWithStudent])
+def list_all_applications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    rows = db.exec(
+        select(Application, User, Opportunity)
+        .join(User, Application.user_id == User.id)
+        .join(Opportunity, Application.opportunity_id == Opportunity.id)
+    ).all()
+    return [
+        ApplicationWithStudent(
+            application_id=app.id,
+            opportunity_id=opp.id,
+            opportunity_name=opp.name,
+            user_id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            status=app.status,
+        )
+        for app, user, opp in rows
+    ]
 
 
 @router.get("/{app_id}", response_model=ApplicationDetail)
@@ -70,6 +95,38 @@ def create_application(
     db.add(application)
     opportunity.filled_slots += 1
     db.add(opportunity)
+    db.commit()
+    db.refresh(application)
+    return ApplicationDetail.model_validate(application)
+
+@router.patch("/reassign", response_model=ApplicationDetail)
+def reassign_application(
+    data: ReassignRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    existing = db.exec(
+        select(Application).where(Application.user_id == data.user_id)
+    ).first()
+    if existing:
+        old_opp = db.get(Opportunity, existing.opportunity_id)
+        if old_opp and old_opp.filled_slots > 0:
+            old_opp.filled_slots -= 1
+            db.add(old_opp)
+        db.delete(existing)
+
+    new_opp = db.get(Opportunity, data.new_opportunity_id)
+    if not new_opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    application = Application(
+        user_id=data.user_id,
+        opportunity_id=data.new_opportunity_id,
+        status="pending",
+    )
+    db.add(application)
+    new_opp.filled_slots += 1
+    db.add(new_opp)
     db.commit()
     db.refresh(application)
     return ApplicationDetail.model_validate(application)
