@@ -32,6 +32,7 @@ class OpportunityUpdate(BaseModel):
 class OpportunityList(BaseModel):
     id: int
     name: str
+    description: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
     max_slots: int
@@ -46,7 +47,6 @@ class OpportunityList(BaseModel):
 
 
 class OpportunityDetail(OpportunityList):
-    description: Optional[str] = None
     creator_id: Optional[int] = None
     updated_at: datetime
 

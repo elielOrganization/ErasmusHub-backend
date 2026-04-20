@@ -4,7 +4,7 @@ import hmac
 import hashlib
 from cryptography.fernet import Fernet
 from datetime import datetime, timedelta, timezone
-from typing import Any, Union
+from typing import Any, Optional, Union
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +16,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "tu_jwt_secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 if not ENCRYPTION_KEY:
@@ -66,6 +67,23 @@ def create_access_token(subject: Union[str, Any], role: str | None = None) -> st
         to_encode["role"] = role
 
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_optional_current_user(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_session),
+) -> Optional[User]:
+    """Like get_current_user but returns None instead of raising when unauthenticated."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return db.get(User, int(user_id))
+    except JWTError:
+        return None
 
 
 def get_current_user(

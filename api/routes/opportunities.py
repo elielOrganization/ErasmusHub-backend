@@ -3,7 +3,7 @@ from sqlmodel import Session, select, func
 from typing import Optional
 
 from core.database import get_session
-from core.security import get_current_user
+from core.security import get_current_user, get_optional_current_user
 from models.user import User
 from models.opportunity import Opportunity
 from models.application import Application
@@ -21,9 +21,17 @@ def list_opportunities(
     page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = None,
     country: Optional[str] = None,
+    all: bool = Query(False, description="Return all statuses (requires auth)"),
     db: Session = Depends(get_session),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    query = select(Opportunity).where(Opportunity.status == "open")
+    query = select(Opportunity)
+
+    # Authenticated users with all=true see every status.
+    # Everyone else sees only open opportunities.
+    if not (all and current_user):
+        query = query.where(Opportunity.status == "open")
+
     if search:
         query = query.where(Opportunity.name.ilike(f"%{search}%"))
     if country:
