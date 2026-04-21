@@ -14,6 +14,7 @@ class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     opportunity_id: int = Field(foreign_key="opportunity.id")
+    tutor_id: Optional[int] = Field(default=None, foreign_key="user.id")
     score: Optional[float] = None
     status: str = Field(default="pending")
     applied_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -23,6 +24,13 @@ class Application(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    user: Optional["User"] = Relationship(back_populates="applications")
+    user: Optional["User"] = Relationship(
+        back_populates="applications",
+        sa_relationship_kwargs={"foreign_keys": "[Application.user_id]"},
+    )
+    tutor: Optional["User"] = Relationship(
+        back_populates="tutored_applications",
+        sa_relationship_kwargs={"foreign_keys": "[Application.tutor_id]"},
+    )
     opportunity: Optional["Opportunity"] = Relationship(back_populates="applications")
     tasks: List["Task"] = Relationship(back_populates="application")

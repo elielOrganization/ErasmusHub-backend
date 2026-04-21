@@ -44,7 +44,14 @@ class User(SQLModel, table=True):
     )
     
     opportunities_created: List["Opportunity"] = Relationship(back_populates="creator")
-    applications: List["Application"] = Relationship(back_populates="user")
+    applications: List["Application"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"foreign_keys": "[Application.user_id]"},
+    )
+    tutored_applications: List["Application"] = Relationship(
+        back_populates="tutor",
+        sa_relationship_kwargs={"foreign_keys": "[Application.tutor_id]"},
+    )
     notifications: List["Notification"] = Relationship(back_populates="user")
     
     internships: List["Internship"] = Relationship(

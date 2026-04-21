@@ -8,7 +8,7 @@ from models.application import Application
 from models.opportunity import Opportunity
 from models.document import Document
 from models.application_document import ApplicationDocument
-from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail, ApplicationWithStudent, ReassignRequest
+from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail, ApplicationWithStudent, ReassignRequest, ApplicationWithOpportunity
 from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
@@ -49,6 +49,37 @@ def list_all_applications(
             status=app.status,
         )
         for app, user, opp in rows
+    ]
+
+
+@router.get("/me/with-opportunity", response_model=list[ApplicationWithOpportunity])
+def list_my_applications_with_opportunity(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Returns the current student's applications joined with full opportunity details."""
+    rows = db.exec(
+        select(Application, Opportunity)
+        .join(Opportunity, Application.opportunity_id == Opportunity.id)
+        .where(Application.user_id == current_user.id)
+        .order_by(Application.applied_at.desc())
+    ).all()
+    return [
+        ApplicationWithOpportunity(
+            id=app.id,
+            opportunity_id=opp.id,
+            status=app.status,
+            applied_at=app.applied_at,
+            opportunity_name=opp.name,
+            opportunity_description=opp.description,
+            opportunity_country=opp.country,
+            opportunity_city=opp.city,
+            opportunity_institution=opp.institution,
+            opportunity_start_date=opp.start_date,
+            opportunity_end_date=opp.end_date,
+            opportunity_status=opp.status,
+        )
+        for app, opp in rows
     ]
 
 
