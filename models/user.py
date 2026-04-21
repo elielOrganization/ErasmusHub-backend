@@ -43,7 +43,10 @@ class User(SQLModel, table=True):
         link_model=UserRole,
     )
     
-    opportunities_created: List["Opportunity"] = Relationship(back_populates="creator")
+    opportunities_created: List["Opportunity"] = Relationship(
+        back_populates="creator",
+        sa_relationship_kwargs={"foreign_keys": "[Opportunity.creator_id]"},
+    )
     applications: List["Application"] = Relationship(back_populates="user")
     notifications: List["Notification"] = Relationship(back_populates="user")
     
