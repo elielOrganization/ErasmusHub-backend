@@ -16,6 +16,7 @@ from .communication import Communication
 from .exemption import Exemption
 from .selection_process import SelectionProcess
 from .chat import Chat, ChatMessage
+from .opportunity_teacher import OpportunityTeacher
 __all__ = [
     "User",
     "Role",
@@ -36,4 +37,5 @@ __all__ = [
     "SelectionProcess",
     "Chat",
     "ChatMessage",
+    "OpportunityTeacher",
 ]

@@ -48,7 +48,6 @@ class OpportunityList(BaseModel):
 
 class OpportunityDetail(OpportunityList):
     creator_id: Optional[int] = None
-    responsible_teacher_id: Optional[int] = None
     updated_at: datetime
 
     class Config:

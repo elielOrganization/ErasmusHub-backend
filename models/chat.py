@@ -13,7 +13,6 @@ class Chat(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     opportunity_id: int = Field(foreign_key="opportunity.id")
     student_id: int = Field(foreign_key="user.id")
-    teacher_id: int = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     opportunity: Optional["Opportunity"] = Relationship(
@@ -22,10 +21,6 @@ class Chat(SQLModel, table=True):
     student: Optional["User"] = Relationship(
         back_populates="chats_as_student",
         sa_relationship_kwargs={"foreign_keys": "[Chat.student_id]"},
-    )
-    teacher: Optional["User"] = Relationship(
-        back_populates="chats_as_teacher",
-        sa_relationship_kwargs={"foreign_keys": "[Chat.teacher_id]"},
     )
     messages: List["ChatMessage"] = Relationship(back_populates="chat")
 

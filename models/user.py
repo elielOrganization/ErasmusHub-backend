@@ -43,10 +43,7 @@ class User(SQLModel, table=True):
         link_model=UserRole,
     )
     
-    opportunities_created: List["Opportunity"] = Relationship(
-        back_populates="creator",
-        sa_relationship_kwargs={"foreign_keys": "[Opportunity.creator_id]"},
-    )
+    opportunities_created: List["Opportunity"] = Relationship(back_populates="creator")
     applications: List["Application"] = Relationship(back_populates="user")
     notifications: List["Notification"] = Relationship(back_populates="user")
     
@@ -83,10 +80,6 @@ class User(SQLModel, table=True):
     chats_as_student: List["Chat"] = Relationship(
         back_populates="student",
         sa_relationship_kwargs={"foreign_keys": "[Chat.student_id]"},
-    )
-    chats_as_teacher: List["Chat"] = Relationship(
-        back_populates="teacher",
-        sa_relationship_kwargs={"foreign_keys": "[Chat.teacher_id]"},
     )
     chat_messages_sent: List["ChatMessage"] = Relationship(
         back_populates="sender",

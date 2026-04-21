@@ -26,8 +26,7 @@ class ChatRead(BaseModel):
     opportunity_name: str
     student_id: int
     student_name: str
-    teacher_id: int
-    teacher_name: str
+    teachers_names: str
     unread_count: int = 0
     last_message: Optional[MessageRead] = None
     created_at: datetime

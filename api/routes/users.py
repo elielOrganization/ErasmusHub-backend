@@ -26,7 +26,42 @@ from models.interview import Interview, InterviewStatus
 from core.database import get_session
 from core.security import get_password_hash, encrypt_data, decrypt_data, get_deterministic_hash
 
+from core.security import get_current_user
+
 router = APIRouter(tags=["Users"])
+
+
+@router.get("/users/teachers", response_model=List[UserPublic])
+def list_teachers(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Return all users with teacher or coordinator roles."""
+    from sqlalchemy import or_
+    rows = db.exec(
+        select(User)
+        .join(UserRole, UserRole.user_id == User.id)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(
+            or_(
+                Role.name.ilike("%teacher%"),
+                Role.name.ilike("%profesor%"),
+                Role.name.ilike("%coordinator%"),
+                Role.name.ilike("%coordinador%"),
+            )
+        )
+    ).all()
+
+    result = []
+    for u in rows:
+        roles = db.exec(select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == u.id)).all()
+        user_dict = u.model_dump(exclude={"roles"})
+        if user_dict.get("rodne_cislo"):
+            user_dict["rodne_cislo"] = decrypt_data(user_dict["rodne_cislo"])
+        user_data = UserPublic.model_validate(user_dict)
+        user_data.role = roles[0] if roles else None
+        result.append(user_data)
+    return result
 
 
 @router.post("/users/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)

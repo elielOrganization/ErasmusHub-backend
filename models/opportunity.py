@@ -26,16 +26,9 @@ class Opportunity(SQLModel, table=True):
     published_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = Field(default="open")
     creator_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    responsible_teacher_id: Optional[int] = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    creator: Optional["User"] = Relationship(
-        back_populates="opportunities_created",
-        sa_relationship_kwargs={"foreign_keys": "[Opportunity.creator_id]"},
-    )
-    responsible_teacher: Optional["User"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[Opportunity.responsible_teacher_id]"},
-    )
+    creator: Optional["User"] = Relationship(back_populates="opportunities_created")
     applications: List["Application"] = Relationship(back_populates="opportunity")
