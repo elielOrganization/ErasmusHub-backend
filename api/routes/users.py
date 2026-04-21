@@ -24,9 +24,7 @@ from schemas.user_schema import UserCreate, UserPublic, UserUpdate
 from models.calificacion import Calificacion
 from models.interview import Interview, InterviewStatus
 from core.database import get_session
-from core.security import get_password_hash, encrypt_data, decrypt_data, get_deterministic_hash
-
-from core.security import get_current_user
+from core.security import get_password_hash, encrypt_data, decrypt_data, get_deterministic_hash, get_current_user
 
 router = APIRouter(tags=["Users"])
 
@@ -37,7 +35,6 @@ def list_teachers(
     db: Session = Depends(get_session),
 ):
     """Return all users with teacher or coordinator roles."""
-    from sqlalchemy import or_
     rows = db.exec(
         select(User)
         .join(UserRole, UserRole.user_id == User.id)
@@ -46,8 +43,10 @@ def list_teachers(
             or_(
                 Role.name.ilike("%teacher%"),
                 Role.name.ilike("%profesor%"),
+                Role.name.ilike("%professor%"),
                 Role.name.ilike("%coordinator%"),
                 Role.name.ilike("%coordinador%"),
+                Role.name.ilike("%tutor%"),
             )
         )
     ).all()
