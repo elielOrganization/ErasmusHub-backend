@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 class ApplicationCreate(BaseModel):
@@ -48,3 +48,21 @@ class ApplicationWithStudent(BaseModel):
 class ReassignRequest(BaseModel):
     user_id: int
     new_opportunity_id: int
+
+
+class ApplicationWithOpportunity(BaseModel):
+    id: int
+    opportunity_id: int
+    status: str
+    applied_at: datetime
+    opportunity_name: str
+    opportunity_description: Optional[str] = None
+    opportunity_country: Optional[str] = None
+    opportunity_city: Optional[str] = None
+    opportunity_institution: Optional[str] = None
+    opportunity_start_date: Optional[date] = None
+    opportunity_end_date: Optional[date] = None
+    opportunity_status: str
+
+    class Config:
+        from_attributes = True

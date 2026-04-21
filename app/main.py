@@ -23,6 +23,7 @@ try:
     from api.routes.interviews import router as interviews_router
     from api.routes.finalList import router as Final_list_router
     from api.routes.chat import router as chat_router
+    from api.routes.opportunity_daily_notes import router as opportunity_daily_notes_router
     print("[STARTUP] Imports OK")
 except Exception as e:
     print(f"[STARTUP] Import error: {e}")
@@ -74,3 +75,4 @@ app.include_router(selection_process_router)
 app.include_router(interviews_router)
 app.include_router(Final_list_router)
 app.include_router(chat_router)
+app.include_router(opportunity_daily_notes_router)
