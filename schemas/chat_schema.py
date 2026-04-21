@@ -3,33 +3,6 @@ from typing import Optional, List
 from datetime import datetime
 
 
-class ChatCreate(BaseModel):
-    name: Optional[str] = None
-    type: str = "direct"
-    participants: List[int]
-
-
-class ChatRead(BaseModel):
-    id: int
-    name: Optional[str] = None
-    type: str
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class ChatParticipantRead(BaseModel):
-    id: int
-    chat_id: int
-    user_id: int
-    role: str
-    joined_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 class MessageCreate(BaseModel):
     content: str
 
@@ -38,6 +11,7 @@ class MessageRead(BaseModel):
     id: int
     chat_id: int
     sender_id: int
+    sender_name: str
     content: str
     is_read: bool
     created_at: datetime
@@ -46,6 +20,31 @@ class MessageRead(BaseModel):
         from_attributes = True
 
 
-class ChatWithLastMessage(ChatRead):
-    last_message: Optional[MessageRead] = None
+class ChatRead(BaseModel):
+    id: int
+    opportunity_id: int
+    opportunity_name: str
+    student_id: int
+    student_name: str
+    teacher_id: int
+    teacher_name: str
     unread_count: int = 0
+    last_message: Optional[MessageRead] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TeacherAssign(BaseModel):
+    teacher_id: int
+
+
+class TeacherInfo(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+
+    class Config:
+        from_attributes = True

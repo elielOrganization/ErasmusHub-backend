@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .communication import Communication
     from .exemption import Exemption
     from .interview import Interview
+    from .chat import Chat, ChatMessage
 
 
 class User(SQLModel, table=True):
@@ -74,4 +75,17 @@ class User(SQLModel, table=True):
     interviews_reviewed: List["Interview"] = Relationship(
         back_populates="reviewer",
         sa_relationship_kwargs={"foreign_keys": "Interview.reviewed_by"}
+    )
+
+    chats_as_student: List["Chat"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={"foreign_keys": "[Chat.student_id]"},
+    )
+    chats_as_teacher: List["Chat"] = Relationship(
+        back_populates="teacher",
+        sa_relationship_kwargs={"foreign_keys": "[Chat.teacher_id]"},
+    )
+    chat_messages_sent: List["ChatMessage"] = Relationship(
+        back_populates="sender",
+        sa_relationship_kwargs={"foreign_keys": "[ChatMessage.sender_id]"},
     )

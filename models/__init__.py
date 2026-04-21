@@ -15,6 +15,7 @@ from .attendance import Attendance
 from .communication import Communication
 from .exemption import Exemption
 from .selection_process import SelectionProcess
+from .chat import Chat, ChatMessage
 __all__ = [
     "User",
     "Role",
@@ -33,4 +34,6 @@ __all__ = [
     "Communication",
     "Exemption",
     "SelectionProcess",
+    "Chat",
+    "ChatMessage",
 ]
