@@ -25,6 +25,13 @@ def _get_opp_teachers(opportunity_id: int, db: Session) -> List[User]:
         .join(OpportunityTeacher, OpportunityTeacher.teacher_id == User.id)
         .where(OpportunityTeacher.opportunity_id == opportunity_id)
     ).all()
+    # Fall back to the opportunity creator so chats work even before explicit assignment.
+    if not rows:
+        opp = db.get(Opportunity, opportunity_id)
+        if opp and opp.creator_id:
+            creator = db.get(User, opp.creator_id)
+            if creator:
+                return [creator]
     return rows
 
 
@@ -35,12 +42,24 @@ def _is_teacher_of_opp(user_id: int, opportunity_id: int, db: Session) -> bool:
             OpportunityTeacher.teacher_id == user_id,
         )
     ).first()
-    return row is not None
+    if row:
+        return True
+    # Also treat the opportunity creator as a teacher.
+    opp = db.get(Opportunity, opportunity_id)
+    return opp is not None and opp.creator_id == user_id
 
 
 def _is_admin(user_id: int, db: Session) -> bool:
-    role = db.exec(select(UserRole).where(UserRole.user_id == user_id)).first()
-    return role is not None and role.role_id == 1
+    # Check by role name so the function doesn't rely on a hardcoded role_id.
+    row = db.exec(
+        select(UserRole)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(
+            UserRole.user_id == user_id,
+            Role.name.ilike("%admin%"),
+        )
+    ).first()
+    return row is not None
 
 
 def _build_chat_read(chat: Chat, current_user_id: int, db: Session) -> ChatRead:
@@ -75,7 +94,7 @@ def _build_chat_read(chat: Chat, current_user_id: int, db: Session) -> ChatRead:
     student = db.get(User, chat.student_id)
     opp = db.get(Opportunity, chat.opportunity_id)
     teachers = _get_opp_teachers(chat.opportunity_id, db)
-    teachers_names = ", ".join(f"{t.first_name} {t.last_name}" for t in teachers) or "Sin profesor"
+    teachers_names = ", ".join(f"{t.first_name} {t.last_name}" for t in teachers)
 
     return ChatRead(
         id=chat.id,
@@ -163,33 +182,73 @@ def remove_opportunity_teacher(
 
 # ── Chat endpoints ───────────────────────────────────────────────
 
-@router.get("/", response_model=List[ChatRead])
+def _ensure_chat(opportunity_id: int, student_id: int, db: Session) -> Chat:
+    """Return the existing chat or create one if it doesn't exist yet."""
+    chat = db.exec(
+        select(Chat).where(
+            Chat.opportunity_id == opportunity_id,
+            Chat.student_id == student_id,
+        )
+    ).first()
+    if not chat:
+        chat = Chat(opportunity_id=opportunity_id, student_id=student_id)
+        db.add(chat)
+        db.flush()
+    return chat
+
+
+@router.get("", response_model=List[ChatRead])
 def list_my_chats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    """List all chats for the current user."""
-    # Students: chats where they are the student
+    """List all chats for the current user, auto-creating missing ones from existing applications."""
+
+    # ── Collect opportunity IDs where current user acts as teacher/creator ──
+    teacher_opp_ids = set(db.exec(
+        select(OpportunityTeacher.opportunity_id).where(
+            OpportunityTeacher.teacher_id == current_user.id
+        )
+    ).all())
+
+    created_opp_ids = set(db.exec(
+        select(Opportunity.id).where(Opportunity.creator_id == current_user.id)
+    ).all())
+
+    staff_opp_ids = teacher_opp_ids | created_opp_ids
+
+    # ── For every application the current user has, ensure a chat exists ──
+    my_applications = db.exec(
+        select(Application).where(Application.user_id == current_user.id)
+    ).all()
+
+    for app in my_applications:
+        _ensure_chat(app.opportunity_id, current_user.id, db)
+
+    # ── For every application to the staff's opportunities, ensure a chat exists ──
+    if staff_opp_ids:
+        staff_applications = db.exec(
+            select(Application).where(Application.opportunity_id.in_(staff_opp_ids))
+        ).all()
+        for app in staff_applications:
+            _ensure_chat(app.opportunity_id, app.user_id, db)
+
+    db.commit()
+
+    # ── Collect all relevant chats ──
     student_chats = db.exec(
         select(Chat).where(Chat.student_id == current_user.id)
     ).all()
 
-    # Teachers/coordinators: chats for opportunities they're assigned to
-    teacher_opp_ids = db.exec(
-        select(OpportunityTeacher.opportunity_id).where(
-            OpportunityTeacher.teacher_id == current_user.id
-        )
-    ).all()
-
-    teacher_chats = []
-    if teacher_opp_ids:
-        teacher_chats = db.exec(
-            select(Chat).where(Chat.opportunity_id.in_(teacher_opp_ids))
+    staff_chats: List[Chat] = []
+    if staff_opp_ids:
+        staff_chats = db.exec(
+            select(Chat).where(Chat.opportunity_id.in_(staff_opp_ids))
         ).all()
 
-    seen = set()
-    all_chats = []
-    for c in student_chats + teacher_chats:
+    seen: set = set()
+    all_chats: List[Chat] = []
+    for c in student_chats + staff_chats:
         if c.id not in seen:
             seen.add(c.id)
             all_chats.append(c)
@@ -208,11 +267,7 @@ def get_or_create_chat(
     if not opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
-    teachers = _get_opp_teachers(opp_id, db)
-    if not teachers:
-        raise HTTPException(status_code=400, detail="This opportunity has no responsible teachers assigned yet")
-
-    # Check if current user is a teacher of this opportunity
+    # Check if current user is a teacher/creator of this opportunity — show them existing chats.
     if _is_teacher_of_opp(current_user.id, opp_id, db):
         chats = db.exec(select(Chat).where(Chat.opportunity_id == opp_id)).all()
         if not chats:
