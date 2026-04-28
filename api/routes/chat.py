@@ -254,14 +254,17 @@ def list_my_chats(
             select(Chat).where(Chat.opportunity_id.in_(staff_opp_ids))
         ).all()
 
-    # ── Admins can see ALL chats ──────────────────────────────────
+    # ── Admins only see chats where they have sent at least one message ──
+    # (prevents all admins flooding each other's inboxes with every student chat)
     admin_chats: List[Chat] = []
     if _is_admin(current_user.id, db):
-        all_applications = db.exec(select(Application)).all()
-        for app in all_applications:
-            _ensure_chat(app.opportunity_id, app.user_id, db)
-        db.commit()
-        admin_chats = db.exec(select(Chat)).all()
+        participated_chat_ids = set(db.exec(
+            select(ChatMessage.chat_id).where(ChatMessage.sender_id == current_user.id)
+        ).all())
+        if participated_chat_ids:
+            admin_chats = db.exec(
+                select(Chat).where(Chat.id.in_(participated_chat_ids))
+            ).all()
 
     seen: set = set()
     all_chats: List[Chat] = []
@@ -271,6 +274,27 @@ def list_my_chats(
             all_chats.append(c)
 
     return [_build_chat_read(c, current_user.id, db) for c in all_chats]
+
+
+@router.get("/{chat_id}", response_model=ChatRead)
+def get_chat_by_id(
+    chat_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Fetch a single chat by ID. Admins can access any chat; others must be a participant."""
+    chat = db.get(Chat, chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    is_student = chat.student_id == current_user.id
+    is_teacher = _is_teacher_of_opp(current_user.id, chat.opportunity_id, db)
+    is_admin_user = _is_admin(current_user.id, db)
+
+    if not is_student and not is_teacher and not is_admin_user:
+        raise HTTPException(status_code=403, detail="Not a participant of this chat")
+
+    return _build_chat_read(chat, current_user.id, db)
 
 
 @router.get("/opportunity/{opp_id}", response_model=ChatRead)
