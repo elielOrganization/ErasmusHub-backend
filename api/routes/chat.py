@@ -62,6 +62,26 @@ def _is_admin(user_id: int, db: Session) -> bool:
     return row is not None
 
 
+def _get_display_sender_name(sender: User, opportunity_id: int, db: Session) -> str:
+    """Return the name to display for a message sender.
+
+    When the sender is an admin, mask their identity by showing the name of
+    the first non-admin teacher assigned to the opportunity.  This keeps the
+    student experience consistent — they always see the teacher's name, not
+    an internal admin account name.  Falls back to the real name when no
+    suitable teacher is found.
+    """
+    if not _is_admin(sender.id, db):
+        return f"{sender.first_name} {sender.last_name}"
+
+    teachers = _get_opp_teachers(opportunity_id, db)
+    for teacher in teachers:
+        if not _is_admin(teacher.id, db):
+            return f"{teacher.first_name} {teacher.last_name}"
+    # No non-admin teacher found — fall back to the real name.
+    return f"{sender.first_name} {sender.last_name}"
+
+
 def _build_chat_read(chat: Chat, current_user_id: int, db: Session) -> ChatRead:
     unread = db.exec(
         select(ChatMessage).where(
@@ -85,7 +105,7 @@ def _build_chat_read(chat: Chat, current_user_id: int, db: Session) -> ChatRead:
             id=last_msg_row.id,
             chat_id=last_msg_row.chat_id,
             sender_id=last_msg_row.sender_id,
-            sender_name=f"{sender.first_name} {sender.last_name}" if sender else "?",
+            sender_name=_get_display_sender_name(sender, chat.opportunity_id, db) if sender else "?",
             content=last_msg_row.content,
             is_read=last_msg_row.is_read,
             created_at=last_msg_row.created_at,
@@ -246,9 +266,18 @@ def list_my_chats(
             select(Chat).where(Chat.opportunity_id.in_(staff_opp_ids))
         ).all()
 
+    # ── Admins can see ALL chats ──────────────────────────────────
+    admin_chats: List[Chat] = []
+    if _is_admin(current_user.id, db):
+        all_applications = db.exec(select(Application)).all()
+        for app in all_applications:
+            _ensure_chat(app.opportunity_id, app.user_id, db)
+        db.commit()
+        admin_chats = db.exec(select(Chat)).all()
+
     seen: set = set()
     all_chats: List[Chat] = []
-    for c in student_chats + staff_chats:
+    for c in student_chats + staff_chats + admin_chats:
         if c.id not in seen:
             seen.add(c.id)
             all_chats.append(c)
@@ -312,8 +341,9 @@ def get_messages(
 
     is_student = chat.student_id == current_user.id
     is_teacher = _is_teacher_of_opp(current_user.id, chat.opportunity_id, db)
+    is_admin_user = _is_admin(current_user.id, db)
 
-    if not is_student and not is_teacher:
+    if not is_student and not is_teacher and not is_admin_user:
         raise HTTPException(status_code=403, detail="Not a participant of this chat")
 
     messages = db.exec(
@@ -335,7 +365,7 @@ def get_messages(
             id=msg.id,
             chat_id=msg.chat_id,
             sender_id=msg.sender_id,
-            sender_name=f"{sender.first_name} {sender.last_name}" if sender else "?",
+            sender_name=_get_display_sender_name(sender, chat.opportunity_id, db) if sender else "?",
             content=msg.content,
             is_read=msg.is_read,
             created_at=msg.created_at,
@@ -356,8 +386,9 @@ def send_message(
 
     is_student = chat.student_id == current_user.id
     is_teacher = _is_teacher_of_opp(current_user.id, chat.opportunity_id, db)
+    is_admin_user = _is_admin(current_user.id, db)
 
-    if not is_student and not is_teacher:
+    if not is_student and not is_teacher and not is_admin_user:
         raise HTTPException(status_code=403, detail="Not a participant of this chat")
 
     msg = ChatMessage(chat_id=chat_id, sender_id=current_user.id, content=data.content.strip())
@@ -369,7 +400,7 @@ def send_message(
         id=msg.id,
         chat_id=msg.chat_id,
         sender_id=msg.sender_id,
-        sender_name=f"{current_user.first_name} {current_user.last_name}",
+        sender_name=_get_display_sender_name(current_user, chat.opportunity_id, db),
         content=msg.content,
         is_read=msg.is_read,
         created_at=msg.created_at,
