@@ -243,9 +243,30 @@ def list_my_chats(
 
     db.commit()
 
+    # ── IDs of chats that have at least one message ──────────────
+    chats_with_messages: set = set(db.exec(
+        select(ChatMessage.chat_id).distinct()
+    ).all())
+
+    # ── Opportunities that have at least one explicitly assigned teacher ──
+    # (excludes creator-fallback-only opportunities where admin is the contact)
+    opps_with_assigned_teacher: set = set(db.exec(
+        select(OpportunityTeacher.opportunity_id).distinct()
+    ).all())
+
     # ── Collect all relevant chats ──
+    # Students see a chat if:
+    #   a) The opportunity has an explicitly assigned teacher → show even if empty
+    #   b) The chat has at least one message → covers admin writing first
+    # This prevents empty admin-created chats from appearing in the student's inbox.
     student_chats = db.exec(
-        select(Chat).where(Chat.student_id == current_user.id)
+        select(Chat).where(
+            Chat.student_id == current_user.id,
+            or_(
+                Chat.opportunity_id.in_(opps_with_assigned_teacher) if opps_with_assigned_teacher else False,
+                Chat.id.in_(chats_with_messages) if chats_with_messages else False,
+            )
+        )
     ).all()
 
     staff_chats: List[Chat] = []

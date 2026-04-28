@@ -15,15 +15,10 @@ class Opportunity(SQLModel, table=True):
     description: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
-    address: Optional[str] = None
-    institution: Optional[str] = None
-    duration_days: Optional[int] = None
     max_slots: int = Field(default=1)
     filled_slots: int = Field(default=0)
-    type: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    published_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = Field(default="open")
     creator_id: Optional[int] = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
