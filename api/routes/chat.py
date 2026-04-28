@@ -63,22 +63,7 @@ def _is_admin(user_id: int, db: Session) -> bool:
 
 
 def _get_display_sender_name(sender: User, opportunity_id: int, db: Session) -> str:
-    """Return the name to display for a message sender.
-
-    When the sender is an admin, mask their identity by showing the name of
-    the first non-admin teacher assigned to the opportunity.  This keeps the
-    student experience consistent — they always see the teacher's name, not
-    an internal admin account name.  Falls back to the real name when no
-    suitable teacher is found.
-    """
-    if not _is_admin(sender.id, db):
-        return f"{sender.first_name} {sender.last_name}"
-
-    teachers = _get_opp_teachers(opportunity_id, db)
-    for teacher in teachers:
-        if not _is_admin(teacher.id, db):
-            return f"{teacher.first_name} {teacher.last_name}"
-    # No non-admin teacher found — fall back to the real name.
+    """Return the display name for a message sender. Always uses the sender's real name."""
     return f"{sender.first_name} {sender.last_name}"
 
 
