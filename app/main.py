@@ -10,9 +10,6 @@ try:
     from core.database import create_db_and_tables
     from api.routes.users import router as users_router
     from api.routes.auth import router as auth_router
-    from api.routes.practicas import router as practicas_router
-    from api.routes.exenciones import router as exemptions_router
-    from api.routes.tareas import router as tasks_router
     from api.routes.notificaciones import router as notifications_router
     from api.routes.opportunities import router as opportunities_router
     from api.routes.applications import router as applications_router
@@ -63,9 +60,6 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(auth_router)
-app.include_router(practicas_router)
-app.include_router(exemptions_router)
-app.include_router(tasks_router)
 app.include_router(notifications_router)
 app.include_router(opportunities_router)
 app.include_router(applications_router)

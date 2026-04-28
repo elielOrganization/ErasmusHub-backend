@@ -11,17 +11,10 @@ from models.role import Role
 from models.chat import Chat, ChatMessage
 from models.application import Application
 from models.document import Document
-from models.task import Task
 from models.interview import Interview
 from models.final_list import FinalList
 from models.opportunity_teacher import OpportunityTeacher
 from models.notification import Notification
-from models.internship import Internship
-from models.weekly_schedule import WeeklySchedule
-from models.follow_up import FollowUp
-from models.daily_log import DailyLog
-from models.attendance import Attendance
-from models.communication import Communication
 from models.selection_process import SelectionProcess
 from models.opportunity import Opportunity
 
@@ -58,7 +51,6 @@ def get_admin_stats(
         "total_messages": len(db.exec(select(ChatMessage)).all()),
         "total_documents": len(db.exec(select(Document)).all()),
         "total_interviews": len(db.exec(select(Interview)).all()),
-        "total_internships": len(db.exec(select(Internship)).all()),
     }
 
 
@@ -106,23 +98,7 @@ def reset_erasmus(
     for c in db.exec(select(Chat)).all():
         db.delete(c)
 
-    # 2. Internship children → internships
-    for row in db.exec(select(Communication)).all():
-        db.delete(row)
-    for row in db.exec(select(Attendance)).all():
-        db.delete(row)
-    for row in db.exec(select(DailyLog)).all():
-        db.delete(row)
-    for row in db.exec(select(FollowUp)).all():
-        db.delete(row)
-    for row in db.exec(select(WeeklySchedule)).all():
-        db.delete(row)
-    for row in db.exec(select(Internship)).all():
-        db.delete(row)
-
-    # 3. Tasks → applications
-    for row in db.exec(select(Task)).all():
-        db.delete(row)
+    # 2. Applications
     for row in db.exec(select(Application)).all():
         db.delete(row)
 

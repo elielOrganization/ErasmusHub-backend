@@ -10,9 +10,6 @@ if TYPE_CHECKING:
     from .opportunity import Opportunity
     from .application import Application
     from .notification import Notification
-    from .internship import Internship
-    from .communication import Communication
-    from .exemption import Exemption
     from .interview import Interview
     from .chat import Chat, ChatMessage
 
@@ -53,26 +50,6 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Application.tutor_id]"},
     )
     notifications: List["Notification"] = Relationship(back_populates="user")
-    
-    internships: List["Internship"] = Relationship(
-        back_populates="student",
-        sa_relationship_kwargs={"foreign_keys": "[Internship.student_id]"},
-    )
-    internships_as_cotutor: List["Internship"] = Relationship(
-        back_populates="co_tutor",
-        sa_relationship_kwargs={"foreign_keys": "[Internship.co_tutor_id]"},
-    )
-    internships_as_tutor: List["Internship"] = Relationship(
-        back_populates="tutor",
-        sa_relationship_kwargs={"foreign_keys": "[Internship.tutor_id]"},
-    )
-    
-    communications_sent: List["Communication"] = Relationship(back_populates="sender")
-    
-    exemptions: List["Exemption"] = Relationship(
-        back_populates="student", 
-        sa_relationship_kwargs={"foreign_keys": "[Exemption.student_id]"},
-    )
 
     interviews: List["Interview"] = Relationship(
         back_populates="student",

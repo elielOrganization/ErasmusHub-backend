@@ -1,11 +1,10 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime, timezone
 
 if TYPE_CHECKING:
     from .user import User
     from .opportunity import Opportunity
-    from .task import Task
 
 
 class Application(SQLModel, table=True):
@@ -33,4 +32,3 @@ class Application(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Application.tutor_id]"},
     )
     opportunity: Optional["Opportunity"] = Relationship(back_populates="applications")
-    tasks: List["Task"] = Relationship(back_populates="application")

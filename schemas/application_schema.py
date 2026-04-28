@@ -59,7 +59,6 @@ class ApplicationWithOpportunity(BaseModel):
     opportunity_description: Optional[str] = None
     opportunity_country: Optional[str] = None
     opportunity_city: Optional[str] = None
-    opportunity_institution: Optional[str] = None
     opportunity_start_date: Optional[date] = None
     opportunity_end_date: Optional[date] = None
     opportunity_status: str

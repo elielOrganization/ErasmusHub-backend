@@ -6,10 +6,7 @@ from core.security import get_current_user
 from models.user import User
 from models.application import Application
 from models.opportunity import Opportunity
-from models.document import Document
-from models.application_document import ApplicationDocument
 from schemas.application_schema import ApplicationCreate, ApplicationList, ApplicationDetail, ApplicationWithStudent, ReassignRequest, ApplicationWithOpportunity
-from schemas.document_schema import DocumentRead
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
@@ -74,7 +71,6 @@ def list_my_applications_with_opportunity(
             opportunity_description=opp.description,
             opportunity_country=opp.country,
             opportunity_city=opp.city,
-            opportunity_institution=opp.institution,
             opportunity_start_date=opp.start_date,
             opportunity_end_date=opp.end_date,
             opportunity_status=opp.status,
@@ -162,70 +158,3 @@ def reassign_application(
     db.refresh(application)
     return ApplicationDetail.model_validate(application)
 
-
-# ── Document Library endpoints ─────────────────────────────────────────────────
-
-@router.get("/{app_id}/documents", response_model=list[DocumentRead])
-def list_application_documents(
-    app_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_session),
-):
-    app = db.get(Application, app_id)
-    if not app or app.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    links = db.exec(
-        select(ApplicationDocument).where(ApplicationDocument.application_id == app_id)
-    ).all()
-
-    docs = []
-    for link in links:
-        doc = db.get(Document, link.document_id)
-        if doc:
-            docs.append(DocumentRead.model_validate(doc))
-    return docs
-
-
-@router.post("/{app_id}/documents/{doc_id}", status_code=status.HTTP_201_CREATED)
-def attach_document(
-    app_id: int,
-    doc_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_session),
-):
-    app = db.get(Application, app_id)
-    if not app or app.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    doc = db.get(Document, doc_id)
-    if not doc or doc.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Document not found in your library")
-
-    existing = db.get(ApplicationDocument, (app_id, doc_id))
-    if existing:
-        raise HTTPException(status_code=400, detail="Document already attached to this application")
-
-    link = ApplicationDocument(application_id=app_id, document_id=doc_id)
-    db.add(link)
-    db.commit()
-    return {"ok": True}
-
-
-@router.delete("/{app_id}/documents/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-def detach_document(
-    app_id: int,
-    doc_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_session),
-):
-    app = db.get(Application, app_id)
-    if not app or app.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    link = db.get(ApplicationDocument, (app_id, doc_id))
-    if not link:
-        raise HTTPException(status_code=404, detail="Document not attached to this application")
-
-    db.delete(link)
-    db.commit()
