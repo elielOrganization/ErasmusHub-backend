@@ -276,6 +276,37 @@ def list_my_chats(
     return [_build_chat_read(c, current_user.id, db) for c in all_chats]
 
 
+@router.get("/admin/open/{user_id}", response_model=ChatRead)
+def admin_open_chat_with_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+):
+    """Admin clicks 'chat' on a user in the panel. Returns their most recent chat
+    (creating it if needed). Requires admin role."""
+    if not _is_admin(current_user.id, db):
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Find the most recent application for this user
+    application = db.exec(
+        select(Application)
+        .where(Application.user_id == user_id)
+        .order_by(Application.id.desc())
+    ).first()
+
+    if not application:
+        raise HTTPException(status_code=404, detail="This user has no applications yet")
+
+    chat = _ensure_chat(application.opportunity_id, user_id, db)
+    db.commit()
+    db.refresh(chat)
+    return _build_chat_read(chat, current_user.id, db)
+
+
 @router.get("/{chat_id}", response_model=ChatRead)
 def get_chat_by_id(
     chat_id: int,
