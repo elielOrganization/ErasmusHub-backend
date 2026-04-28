@@ -160,5 +160,10 @@ def reset_erasmus(
         sp.active = False
         db.add(sp)
 
+    # 10. Reset filled_slots to 0 on all opportunities
+    for opp in db.exec(select(Opportunity)).all():
+        opp.filled_slots = 0
+        db.add(opp)
+
     db.commit()
     return {"status": "reset_complete"}
