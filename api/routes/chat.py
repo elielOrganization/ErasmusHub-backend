@@ -63,7 +63,10 @@ def _is_admin(user_id: int, db: Session) -> bool:
 
 
 def _get_display_sender_name(sender: User, opportunity_id: int, db: Session) -> str:
-    """Return the display name for a message sender. Always uses the sender's real name."""
+    """Return the display name for a message sender.
+    Admins are shown as 'Administrador'; everyone else uses their real name."""
+    if _is_admin(sender.id, db):
+        return "Administrador"
     return f"{sender.first_name} {sender.last_name}"
 
 
