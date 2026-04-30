@@ -1,5 +1,7 @@
 from sqlmodel import SQLModel, Field
-from typing import Optional
+from sqlalchemy import Column
+from sqlalchemy.dialects.postgresql import JSONB
+from typing import Optional, Any
 from datetime import datetime, timezone
 
 
@@ -12,5 +14,6 @@ class Calificacion(SQLModel, table=True):
     motivation_letter: float = Field(default=0.0)
     language_certificate: float = Field(default=0.0)
     disability_certificate: float = Field(default=0.0)
+    others: Optional[Any] = Field(default=None, sa_column=Column(JSONB))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[int] = Field(default=None, foreign_key="user.id")
