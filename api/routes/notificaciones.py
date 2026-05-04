@@ -10,7 +10,7 @@ from models.notification import Notification
 from schemas.notification_schema import NotificationRead
 from schemas.pagination import PaginatedResponse
 
-from schemas.notification_schema import NotificationCreate, NotificationBroadcast # O crea uno específico para anuncios
+from schemas.notification_schema import NotificationBroadcast
 from services.notification_service import notify_all_users_service
 
 class UnreadCount(BaseModel):
@@ -30,7 +30,7 @@ def list_my_notifications(
 ):
     query = select(Notification).where(Notification.user_id == current_user.id)
     if search:
-        query = query.where(Notification.title.ilike(f"%{search}%"))
+        query = query.where(Notification.message_key.ilike(f"%{search}%"))
 
     total = db.exec(select(func.count()).select_from(query.subquery())).one()
     items = db.exec(

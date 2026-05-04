@@ -8,11 +8,6 @@ class ApplicationCreate(BaseModel):
     user_id: Optional[int] = None
 
 
-class ApplicationUpdate(BaseModel):
-    status: Optional[str] = None
-    score: Optional[float] = None
-
-
 class ApplicationList(BaseModel):
     id: int
     opportunity_id: int

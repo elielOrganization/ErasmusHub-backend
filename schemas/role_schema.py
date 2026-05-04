@@ -11,11 +11,3 @@ class RoleRead(BaseModel):
         from_attributes = True
 
 
-class UserRoleAssign(BaseModel):
-    user_id: str
-    role_id: int
-
-
-class UserRoleRemove(BaseModel):
-    user_id: str
-    role_id: int

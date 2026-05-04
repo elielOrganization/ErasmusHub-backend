@@ -3,13 +3,6 @@ from typing import Optional
 from datetime import datetime
 
 
-class NotificationCreate(BaseModel):
-    user_id: int
-    message_key: str   # e.g. "app_accepted", "task_due_soon"
-    params: Optional[str] = None  # JSON string with template variables
-    type: str
-
-
 class NotificationBroadcast(BaseModel):
     message_key: str
     type: str
@@ -28,5 +21,3 @@ class NotificationRead(BaseModel):
         from_attributes = True
 
 
-class NotificationMarkRead(BaseModel):
-    is_read: bool = True
