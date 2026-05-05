@@ -1,10 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, select, func
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session, select
 
 from core.database import get_session
-from core.security import get_current_user
-from models.user import User
 from models.role import Role
 from schemas.role_schema import RoleRead
 

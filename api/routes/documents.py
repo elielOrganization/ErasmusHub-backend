@@ -19,7 +19,7 @@ from services.notification_service import create_notification
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "library")
-ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "application/pdf"}
+ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/jpg", "application/pdf"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Tipos de documento obligatorios para aparecer en la vista de revisión
