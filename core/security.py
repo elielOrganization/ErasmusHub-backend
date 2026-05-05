@@ -60,9 +60,9 @@ def create_access_token(subject: Union[str, Any], role: str | None = None) -> st
         "iat": now_utc,
     }
 
-    # Incluimos el rol en el token para que el frontend pueda usarlo sin necesidad de
-    # llamar a /auth/me en cada render. El backend seguirá validando el token contra
-    # la base de datos en rutas críticas.
+    # Include the role in the token so the frontend can use it without
+    # calling /auth/me on every render. The backend still validates the token
+    # against the database on critical routes.
     if role is not None:
         to_encode["role"] = role
 

@@ -16,7 +16,7 @@ def _require_admin(current_user: User) -> None:
     if "admin" not in role_name:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo los administradores pueden modificar la tabla de calificación",
+            detail="Only administrators can modify the grading table.",
         )
 
 

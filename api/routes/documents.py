@@ -22,7 +22,7 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "library")
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg", "image/jpg", "application/pdf"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
-# Tipos de documento obligatorios para aparecer en la vista de revisión
+# Document types required to appear in the review view
 MANDATORY_DOC_TYPES = {
     DocumentType.id_document_front.value,
     DocumentType.id_document_back.value,
@@ -38,7 +38,7 @@ def _is_reviewer(role_name: str) -> bool:
 
 
 def _get_reviewer_user_ids(db: Session) -> list[int]:
-    """Devuelve los IDs de todos los usuarios con rol de profesor o admin."""
+    """Return the IDs of all users with a teacher or admin role."""
     reviewer_role_ids = [
         r.id for r in db.exec(select(Role)).all()
         if _is_reviewer(r.name)
@@ -51,7 +51,7 @@ def _get_reviewer_user_ids(db: Session) -> list[int]:
 
 
 def _student_has_all_mandatory_docs(db: Session, user_id: int) -> bool:
-    """Devuelve True si el alumno tiene todos los documentos obligatorios subidos."""
+    """Return True if the student has uploaded all mandatory document types."""
     existing_types = set(db.exec(
         select(Document.document_type).where(Document.user_id == user_id)
     ).all())
@@ -93,14 +93,14 @@ async def upload_documents(
         if upload.content_type not in ALLOWED_MIME_TYPES:
             raise HTTPException(
                 status_code=400,
-                detail=f"Archivo '{upload.filename}': tipo no permitido. Solo PNG, JPEG y PDF.",
+                detail=f"File '{upload.filename}': type not allowed. Only PNG, JPEG and PDF are accepted.",
             )
 
         contents = await upload.read()
         if len(contents) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=400,
-                detail=f"Archivo '{upload.filename}' supera el límite de 10MB.",
+                detail=f"File '{upload.filename}' exceeds the 10MB size limit.",
             )
 
         original_name = upload.filename or "file"
@@ -148,7 +148,7 @@ async def upload_documents(
             db.refresh(document)
             created.append(DocumentRead.model_validate(document))
 
-    # Notificar a profesores/admins si el alumno acaba de completar todos los obligatorios
+    # Notify reviewers if the student has just completed all mandatory documents
     if _student_has_all_mandatory_docs(db, current_user.id):
         student_name = f"{current_user.first_name} {current_user.last_name}"
         for reviewer_id in _get_reviewer_user_ids(db):
@@ -179,7 +179,7 @@ def get_pending_documents(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    """Devuelve la lista de alumnos con el conteo de documentos por estado. Solo profesor/admin."""
+    """Return the list of students with their document counts by state. Teacher/admin only."""
     role_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == current_user.id)).first()
     role_name = db.exec(select(Role.name).where(Role.id == role_id)).first() or ""
     is_reviewer = any(
@@ -187,9 +187,9 @@ def get_pending_documents(
         for r in ("admin", "teacher", "profesor", "professor", "coordinator", "coordinador")
     )
     if not is_reviewer:
-        raise HTTPException(status_code=403, detail="Solo profesores y administradores pueden acceder.")
+        raise HTTPException(status_code=403, detail="Only teachers and administrators can access this endpoint.")
 
-    # Obtener todos los alumnos que tienen al menos un documento
+    # Get all students that have uploaded at least one document
     student_role_ids = db.exec(
         select(Role.id).where(Role.name == "Student")
     ).all()
@@ -204,7 +204,7 @@ def get_pending_documents(
         select(Document).where(Document.user_id.in_(student_user_ids))
     ).all()
 
-    # Agrupar por user_id
+    # Group by user_id
     from collections import defaultdict
     doc_map: dict = defaultdict(lambda: {"pending": 0, "approved": 0, "rejected": 0, "total": 0, "types": set(), "mandatory_states": {}})
     for doc in documents:
@@ -214,7 +214,7 @@ def get_pending_documents(
         if doc.document_type in MANDATORY_DOC_TYPES:
             doc_map[doc.user_id]["mandatory_states"][doc.document_type] = doc.state.value
 
-    # Solo incluir alumnos que tienen TODOS los documentos obligatorios subidos
+    # Only include students that have uploaded ALL mandatory document types
     complete_user_ids = [
         uid for uid, counts in doc_map.items()
         if MANDATORY_DOC_TYPES.issubset(counts["types"])
@@ -264,12 +264,12 @@ def serve_document_file(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    """Sirve el archivo físico. Accesible por el propietario o por profesor/admin."""
+    """Serve the physical file. Accessible by the owner or by a teacher/admin."""
     document = db.get(Document, doc_id)
     if not document:
-        raise HTTPException(status_code=404, detail="Documento no encontrado.")
+        raise HTTPException(status_code=404, detail="Document not found.")
 
-    # Comprobar si el usuario es profesor o admin
+    # Check if the user is a teacher or admin
     role_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == current_user.id)).first()
     role_name = db.exec(select(Role.name).where(Role.id == role_id)).first() or ""
     is_reviewer = any(
@@ -278,10 +278,10 @@ def serve_document_file(
     )
 
     if document.user_id != current_user.id and not is_reviewer:
-        raise HTTPException(status_code=403, detail="No tienes permiso para ver este archivo.")
+        raise HTTPException(status_code=403, detail="You do not have permission to view this file.")
 
     if not document.file_path or not os.path.exists(document.file_path):
-        raise HTTPException(status_code=404, detail="Archivo no encontrado en el servidor.")
+        raise HTTPException(status_code=404, detail="File not found on the server.")
 
     mime_type, _ = mimetypes.guess_type(document.file_path)
     return FileResponse(
@@ -299,7 +299,7 @@ def get_document(
 ):
     document = db.get(Document, doc_id)
     if not document or document.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Documento no encontrado.")
+        raise HTTPException(status_code=404, detail="Document not found.")
     return DocumentRead.model_validate(document)
 
 @router.get("/user/{user_id}")
@@ -310,7 +310,7 @@ def get_user_documents(
     rol_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == user_id)).first()  
     rol = db.exec(select(Role.name).where(Role.id == rol_id)).first()
     if rol != "Student":
-        raise HTTPException(status_code=401, detail="El usuario seleccionado no es un estudiante")
+        raise HTTPException(status_code=401, detail="The selected user is not a student.")
 
     documents = db.exec(
         select(Document).where(Document.user_id == user_id)
@@ -326,7 +326,7 @@ def delete_document(
 ):
     document = db.get(Document, doc_id)
     if not document or document.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Documento no encontrado.")
+        raise HTTPException(status_code=404, detail="Document not found.")
 
     if document.file_path and os.path.exists(document.file_path):
         os.remove(document.file_path)
@@ -342,7 +342,7 @@ def review_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    # Solo profesor/admin puede revisar
+    # Only teacher/admin can review documents
     role_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == current_user.id)).first()
     role_name = db.exec(select(Role.name).where(Role.id == role_id)).first() or ""
     is_reviewer = any(
@@ -350,23 +350,23 @@ def review_document(
         for r in ("admin", "teacher", "profesor", "professor", "coordinator", "coordinador")
     )
     if not is_reviewer:
-        raise HTTPException(status_code=403, detail="Solo profesores y administradores pueden revisar documentos.")
+        raise HTTPException(status_code=403, detail="Only teachers and administrators can review documents.")
 
     document = db.get(Document, doc_id)
     if not document:
-        raise HTTPException(status_code=404, detail="Documento no encontrado.")
+        raise HTTPException(status_code=404, detail="Document not found.")
 
     if review_data.state == DocumentState.pending:
         raise HTTPException(
             status_code=400,
-            detail="El estado de revisión debe ser 'approved' o 'rejected'."
+            detail="Review state must be 'approved' or 'rejected'."
         )
 
     if review_data.state == DocumentState.rejected:
         if not review_data.rejection_reason or not review_data.rejection_reason.strip():
             raise HTTPException(
                 status_code=400,
-                detail="El motivo del rechazo es obligatorio al rechazar un documento."
+                detail="A rejection reason is required when rejecting a document."
             )
 
         document.rejection_reason = review_data.rejection_reason.strip()
@@ -393,12 +393,12 @@ def review_document(
         if review_data.grade < 1 or review_data.grade > 10:
             raise HTTPException(
                 status_code=400,
-                detail="La nota del documento debe ser un número del 1 al 10."
+                detail="Document grade must be a number between 1 and 10."
             )
         if not document.calificable:
             raise HTTPException(
                 status_code=400,
-                detail="El documento no es calificable, no debe tener nota."
+                detail="This document type is not gradeable and must not have a grade."
             )
         document.grade = review_data.grade
 
@@ -407,7 +407,7 @@ def review_document(
     db.commit()
     db.refresh(document)
 
-    # Notificar al alumno del cambio de estado
+    # Notify the student about the state change
     if review_data.state == DocumentState.approved:
         create_notification(
             db=db,

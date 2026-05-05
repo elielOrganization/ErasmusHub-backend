@@ -34,15 +34,15 @@ def update_interview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
-    """Profesor puntúa o rechaza la entrevista de un alumno."""
+    """Teacher grades or rejects a student's interview."""
     role_id = db.exec(select(UserRole.role_id).where(UserRole.user_id == current_user.id)).first()
     role_name = db.exec(select(Role.name).where(Role.id == role_id)).first() or ""
     if not _is_reviewer(role_name):
-        raise HTTPException(status_code=403, detail="Solo profesores y administradores pueden gestionar entrevistas.")
+        raise HTTPException(status_code=403, detail="Only teachers and administrators can manage interviews.")
 
     student = db.get(User, user_id)
     if not student:
-        raise HTTPException(status_code=404, detail="Alumno no encontrado.")
+        raise HTTPException(status_code=404, detail="Student not found.")
 
     interview = db.exec(select(Interview).where(Interview.user_id == user_id)).first()
     if not interview:
@@ -51,7 +51,7 @@ def update_interview(
 
     if data.status == "rejected":
         if not data.rejection_reason or not data.rejection_reason.strip():
-            raise HTTPException(status_code=400, detail="El motivo del rechazo es obligatorio.")
+            raise HTTPException(status_code=400, detail="A rejection reason is required.")
         interview.status = "rejected"
         interview.rejection_reason = data.rejection_reason.strip()
         interview.grade = None
@@ -71,7 +71,7 @@ def update_interview(
 
     elif data.grade is not None:
         if data.grade < 0 or data.grade > 10:
-            raise HTTPException(status_code=400, detail="La nota debe estar entre 0 y 10.")
+            raise HTTPException(status_code=400, detail="Grade must be between 0 and 10.")
         interview.grade = data.grade
         interview.status = "passed"
         interview.rejection_reason = None
@@ -108,7 +108,7 @@ def update_interview(
         )
 
     else:
-        raise HTTPException(status_code=400, detail="Debes proporcionar una nota o rechazar al alumno.")
+        raise HTTPException(status_code=400, detail="You must provide a grade or reject the student.")
 
     return {
         "user_id": user_id,

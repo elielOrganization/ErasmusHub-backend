@@ -35,15 +35,12 @@ def create_notification(
     return notif
 
 def notify_all_users_service(db: Session, message_key: str, notif_type: str, params: dict | None = None):
-    """
-    Obtiene todos los usuarios y crea una notificación para cada uno.
-    """
-    # 1. Obtener todos los IDs de usuarios activos
+    """Create a notification for every user in the system."""
+    # 1. Get all active user IDs
     users = db.exec(select(User)).all()
-    
-    # 2. Crear las notificaciones
+
+    # 2. Create notifications
     for user in users:
-        # Reutilizamos tu lógica existente
         create_notification(
             db=db,
             user_id=user.id,

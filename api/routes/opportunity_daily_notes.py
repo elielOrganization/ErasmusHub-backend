@@ -37,7 +37,7 @@ def get_notes(
         if not assignment:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="No tienes acceso al diario de este alumno.",
+                detail="You do not have access to this student's diary.",
             )
         target_user_id = student_id
     else:
@@ -59,11 +59,11 @@ def upsert_note(
     db: Session = Depends(get_session),
 ):
     """Create or update the note for a specific day. One note per user/opportunity/date."""
-    # No se permiten notas para fechas futuras (validación en servidor)
+    # Server-side guard: notes cannot be registered for future dates
     if data.date > date_type.today():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No se pueden registrar notas para fechas futuras.",
+            detail="Notes cannot be registered for future dates.",
         )
 
     existing = db.exec(

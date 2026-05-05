@@ -42,7 +42,7 @@ def _get_or_create_process(db: Session) -> SelectionProcess:
 
 def _require_admin(current_user: User):
     if not any(role.name.lower() in ['admin', 'administrator'] for role in current_user.roles):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permisos para cambiar el proceso")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to change the process")
 
 
 def _check_and_apply_schedule(process: SelectionProcess, db: Session) -> bool:
@@ -110,7 +110,7 @@ def schedule_selection_process(
     _require_admin(current_user)
 
     if body.scheduled_start is None and body.scheduled_end is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debes indicar al menos una fecha")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one date must be provided")
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -123,11 +123,11 @@ def schedule_selection_process(
         end = end.replace(tzinfo=None)
 
     if start and start <= now:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La fecha de inicio debe ser futura")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The start date must be in the future")
     if end and end <= now:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La fecha de fin debe ser futura")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The end date must be in the future")
     if start and end and end <= start:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La fecha de fin debe ser posterior a la de inicio")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The end date must be after the start date")
 
     process = _get_or_create_process(db)
     process.scheduled_start = start
