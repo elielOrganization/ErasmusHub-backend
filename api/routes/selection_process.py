@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session, select, delete
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 from core.database import get_session
@@ -47,7 +47,7 @@ def _require_admin(current_user: User):
 
 def _check_and_apply_schedule(process: SelectionProcess, db: Session) -> bool:
     """Auto-toggle process based on scheduled times. Returns True if state changed."""
-    now = datetime.now()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     changed = False
 
     if process.scheduled_start and not process.active and process.scheduled_start <= now:
@@ -112,10 +112,15 @@ def schedule_selection_process(
     if body.scheduled_start is None and body.scheduled_end is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debes indicar al menos una fecha")
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     start = body.scheduled_start
     end = body.scheduled_end
+
+    if start and start.tzinfo is not None:
+        start = start.replace(tzinfo=None)
+    if end and end.tzinfo is not None:
+        end = end.replace(tzinfo=None)
 
     if start and start <= now:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La fecha de inicio debe ser futura")
