@@ -25,6 +25,21 @@ engine = create_engine(
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+    _migrate_selection_process()
+
+def _migrate_selection_process():
+    """Add scheduled_start / scheduled_end columns if they don't exist yet."""
+    with engine.connect() as conn:
+        for col, col_type in [("scheduled_start", "TIMESTAMP"), ("scheduled_end", "TIMESTAMP")]:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE selection_process ADD COLUMN IF NOT EXISTS {col} {col_type}"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
 def get_session():
     with Session(engine) as session:
