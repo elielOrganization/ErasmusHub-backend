@@ -6,7 +6,7 @@ from core.database import get_session
 from core.security import get_current_user
 from models.user import User
 from models.calificacion import Calificacion
-from schemas.calificacion_schema import CalificacionRead, CalificacionUpdate, OtrosField
+from schemas.calificacion_schema import CalificacionRead, CalificacionUpdate, OthersField
 
 router = APIRouter(prefix="/calificacion", tags=["Calificacion"])
 
@@ -22,12 +22,12 @@ def _require_admin(current_user: User) -> None:
 
 def _row_to_read(row: Calificacion) -> CalificacionRead:
     """Convert ORM row to CalificacionRead. JSONB column arrives as dict already."""
-    otros = None
+    others = None
     if row.others:
         try:
-            otros = OtrosField.model_validate(row.others)
+            others = OthersField.model_validate(row.others)
         except Exception:
-            otros = None
+            others = None
 
     return CalificacionRead(
         id=row.id,
@@ -36,7 +36,7 @@ def _row_to_read(row: Calificacion) -> CalificacionRead:
         motivation_letter=row.motivation_letter,
         language_certificate=row.language_certificate,
         disability_certificate=row.disability_certificate,
-        otros=otros,
+        others=others,
         updated_at=row.updated_at,
         updated_by=row.updated_by,
     )
@@ -56,7 +56,7 @@ def get_calificacion(
             motivation_letter=0.0,
             language_certificate=0.0,
             disability_certificate=0.0,
-            otros=None,
+            others=None,
             updated_at=datetime.now(timezone.utc),
             updated_by=None,
         )
@@ -82,7 +82,7 @@ def update_calificacion(
     row.language_certificate = body.language_certificate
     row.disability_certificate = body.disability_certificate
     # Store as dict — SQLAlchemy serializes dict → JSONB automatically
-    row.others = body.otros.model_dump() if body.otros else None
+    row.others = body.others.model_dump() if body.others else None
     row.updated_at = datetime.now(timezone.utc)
     row.updated_by = current_user.id
 
