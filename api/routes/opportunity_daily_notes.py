@@ -11,7 +11,7 @@ from schemas.opportunity_daily_note_schema import DailyNoteUpsert, DailyNoteRead
 router = APIRouter(prefix="/opportunity-daily-notes", tags=["Opportunity Daily Notes"])
 
 
-@router.get("/", response_model=list[DailyNoteRead])
+@router.get("", response_model=list[DailyNoteRead])
 def get_notes(
     opportunity_id: int,
     student_id: int | None = None,
@@ -52,7 +52,7 @@ def get_notes(
     return notes
 
 
-@router.post("/", response_model=DailyNoteRead)
+@router.post("", response_model=DailyNoteRead)
 def upsert_note(
     data: DailyNoteUpsert,
     current_user: User = Depends(get_current_user),
