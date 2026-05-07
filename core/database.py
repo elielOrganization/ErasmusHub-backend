@@ -25,6 +25,19 @@ engine = create_engine(
 )
 
 def create_db_and_tables():
+    print("\n=== [DB DEBUG] INSPECCIONANDO METADATA ===")
+    tablas_detectadas = list(SQLModel.metadata.tables.keys())
+    
+    if not tablas_detectadas:
+        print("⚠️ ALERTA: No se detectaron tablas en SQLModel.metadata. Verifica tus imports.")
+    else:
+        print(f"✅ Tablas registradas en memoria ({len(tablas_detectadas)}):")
+        for table in tablas_detectadas:
+            # Obtenemos las columnas de cada tabla para ver si están actualizadas
+            cols = list(SQLModel.metadata.tables[table].columns.keys())
+            print(f"   -> {table} (Columnas: {', '.join(cols)})")
+    
+    print("=== [DB DEBUG] FIN DE INSPECCIÓN ===\n")
     SQLModel.metadata.create_all(engine)
     _migrate_selection_process()
 
